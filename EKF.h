@@ -23,10 +23,10 @@ private:
 public:
   EKF(POL &Pol_)
     : Pol_ref(Pol_),
-      R_cov((Eigen::Matrix<float, 8, 1>() << 2.5e-3f, 2.5e-3f, 2.5e-3f, 1e-4f, 1e-4f, 1e-4f, 1e-5f, 1e-5f).finished().asDiagonal()),  // sensor noise covariance
-      Q_cov((Eigen::Matrix<float, 4, 1>() << 4e-5f, 1e-4f, 2.5e-5f, 1e-4f).finished().asDiagonal())
-  // R_cov((Eigen::Matrix<float, 8, 1>() << 7.18e-4f, 7.18e-4f, 7.18e-4f, 3.6233e-5f, 3.6233e-5f, 3.6233e-5f, 1e-8f, 1e-8f).finished().asDiagonal()),  // sensor noise covariance
-  // Q_cov((Eigen::Matrix<float, 4, 1>() << 1e-4f, 1e-4f, 1e-4f, 2.5e-5f).finished().asDiagonal())                       // process noise covariance
+      R_cov((Eigen::Matrix<float, 8, 1>() << 1.54239e-3f, 1.93287e-3f, 2.63191e-3f, 3.11351e-6f, 4.12642e-6f, 5.37135e-6f, 1e-5f, 1e-5f).finished().asDiagonal()),  // sensor noise covariance
+      Q_cov((Eigen::Matrix<float, 4, 1>() <<  4e-5f, 1e-4f, 4e-5f, 1e-4f).finished().asDiagonal())
+      // R_cov((Eigen::Matrix<float, 8, 1>() << 1.54239e-1f, 1.93287e-1f, 2.63191e-1f, 3.11351e-3f, 4.12642e-3f, 5.37135e-3f, 1e-5f, 1e-5f).finished().asDiagonal()),  // sensor noise covariance
+      // Q_cov((Eigen::Matrix<float, 4, 1>() << 4e-5f, 1e-4f, 4e-5f, 1e-4f).finished().asDiagonal())
   {
     x.setZero();  // 상태 벡터 초기화
     x_pred.setZero();

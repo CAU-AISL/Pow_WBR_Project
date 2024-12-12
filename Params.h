@@ -32,11 +32,14 @@ const float PHI_MAX = 30.0;   // phi 최대값 (degree)
 const float VEL_MAX = 0.5;  // 최대 속도 (m/s)
 const float YAW_MAX = 1.5;  // 최대 yaw angular velocity (rad/s)
 
-const float MAX_TORQUE_COMMAND = 200.000;  // 최대 torque command
+const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
 
 // 핫스팟 정보 입력 -> 정보만 입력하면 와이파이 연결 된다.
 const char* ssid = "Jeongbin";       // 핫스팟 이름
 const char* password = "james0928";  // 핫스팟 비밀번호
+// const char* ssid = "OSB";       // 핫스팟 이름
+// const char* password = "12345678";  // 핫스팟 비밀번호
+
 
 const float dt = 0.012;  // sampling time
 

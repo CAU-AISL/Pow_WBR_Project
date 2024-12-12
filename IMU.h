@@ -14,8 +14,12 @@ public:
   float temperature;  // 온도 (섭씨)
 
   // 캘리브레이션 값
-  Eigen::Vector3f gyro_bias{ -8.38f * M_PI / 180, 0.05f * M_PI / 180, 0.68f * M_PI / 180 };  // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.07f * 9.80665f, -0.02f * 9.80665f, -0.1f * 9.80665f };       // (m/s^2)
+  // Eigen::Vector3f gyro_bias{ -8.38f * M_PI / 180, 0.05f * M_PI / 180, 0.68f * M_PI / 180 };  // (rad/s)
+  // Eigen::Vector3f accel_bias{ 0.07f * 9.80665f, -0.02f * 9.80665f, -0.1f * 9.80665f };       // (m/s^2)
+  Eigen::Vector3f gyro_bias{ -0.15315f, -0.00129f, -0.00132f};  // (rad/s)
+  Eigen::Vector3f accel_bias{ 0.583683f, -0.22948f, -1.137587f };       // (m/s^2)
+
+
 
   // 생성자
   IMU() {}
@@ -72,13 +76,23 @@ public:
     acc_vec = (acc_raw_vec.cast<float>() / 16384.0f) * 9.80665f - accel_bias;
     gyr_vec = (gyr_raw_vec.cast<float>() / 131.0f) * M_PI / 180 - gyro_bias;
 
-    float alpha = cutoffFrequency(10);
-    lowPassFilter(acc_vec, acc_vec_prev, alpha);
-    lowPassFilter(gyr_vec, gyr_vec_prev, alpha);
+    applyFilters();
 
     // 온도 변환
     temperature = Tmp / 340.0f + 36.53f;
     return true;
+  }
+
+  // 필터 적용 함수
+  void applyFilters() {
+    float alphaLPF = cutoffFrequencyLPF(10);   // LPF 기준 주파수 10Hz
+    float alphaHPF = cutoffFrequencyHPF(0.5);  // HPF 기준 주파수 0.5Hz
+
+    // 가속도에 LPF 적용
+    lowPassFilter(acc_vec, acc_vec_prev, alphaLPF);
+
+    // 자이로에 HPF 적용
+    // highPassFilter(gyr_vec, gyr_vec_prev, alphaHPF);
   }
 
   void lowPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, const float alpha) {
@@ -86,14 +100,20 @@ public:
     prevOutput = input;
   }
 
-  float cutoffFrequency(float f_c) {
-    // Time constant τ 계산
+  void highPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, const float alpha) {
+    Eigen::Vector3f temp = input;
+    input = alpha * (prevOutput + input - prevOutput);
+    prevOutput = temp;
+  }
+
+  float cutoffFrequencyLPF(float f_c) {
     float tau = 1.0 / (2.0 * M_PI * f_c);
+    return dt / (tau + dt);
+  }
 
-    // Alpha 값 계산
-    float alpha = dt / (tau + dt);
-
-    return alpha;
+  float cutoffFrequencyHPF(float f_c) {
+    float tau = 1.0 / (2.0 * M_PI * f_c);
+    return tau / (tau + dt);
   }
 
   // 데이터를 Serial Plotter에 출력하는 함수

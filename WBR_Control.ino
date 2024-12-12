@@ -31,6 +31,11 @@ Eigen::Matrix<float, 8, 1> z = Eigen::Matrix<float, 8, 1>::Zero();
 
 int i = 0;
 unsigned long previousMillis = 0;
+unsigned long time_ref = 0;
+float h_d = HEIGHT_MAX, phi_d = 0;
+float v_d = 0, dpsi_d = 0;
+
+void serialPrintStates();
 
 void setup() {
   Serial.begin(115200);
@@ -48,29 +53,34 @@ void setup() {
   // RS485 및 Serial 통신 초기화
   RS485.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
 
-  unsigned long startMicros = micros();
-  unsigned long timeout = 5000 * 1000;  // 타임아웃 5초 설정
-  bool dataReceived = false;
+  // WIFI 연결
+  WIFI_Logger.begin();
+
+  unsigned long receiver_timer_start = millis();
+  const unsigned long timeout = 5000;  // 타임아웃 5초 설정
 
   // SBUS 데이터 수신 대기 (타임아웃 처리)
-  while (!dataReceived) {
-    dataReceived = receiver.readData();  // 데이터가 수신되면 true
-    if (micros() - startMicros > timeout) {
+  while (!receiver.readData()) {
+    if (micros() - receiver_timer_start > timeout) {
       Serial.println("Timeout: No data received from SBUS.");
-      startMicros = micros();  // 타임아웃 초기화
+      receiver_timer_start = millis();  // 타임아웃 초기화
     }
   }
   receiver.updateData();
+
+  // 시간 측정 시작
+  time_ref = millis();
 }
 
 void loop() {
   unsigned long currentMillis = millis();  // 현재 시간
 
-  // 12ms가 경과했을 때만 실행
-  if (currentMillis - previousMillis >= dt*1000) {
+  // sampling time이 경과했을 때만 실행
+  if (currentMillis - previousMillis >= dt * 1000) {
     // 경과 시간 출력
-    Serial.print("Sampling Time (ms): ");
-    Serial.println(currentMillis - previousMillis);
+    Serial.print("SamplingTime(ms):");
+    Serial.print(currentMillis - previousMillis);
+    Serial.print(" ");
     previousMillis = currentMillis;  // 마지막 실행 시간을 현재 시간으로 업데이트
 
 
@@ -79,15 +89,14 @@ void loop() {
     }
 
     if (receiver.isRun()) {
-      float h_d, phi_d;
-      float v_d, dpsi_d;
+      // Running Mode
+
       receiver.updateDesiredStates();
       h_d = receiver.getDesiredHeight();
       // phi_d = receiver.getDesiredRoll();
       phi_d = 0;  // roll control diable
       v_d = receiver.getDesiredVel();
       dpsi_d = receiver.getDesiredYawVel();
-
 
       Pol.setHR(h_d, phi_d);
       Pol.calculate_com_and_inertia();
@@ -98,6 +107,36 @@ void loop() {
       MPU6050.readData();
       MPU6050.getIMUMeasurement(z);
       VYB_controller.getMotorSpeedMeasurement(z);
+
+      // // state estimation
+      // if (!Estimator.estimate_state(x, z)) {
+      //   // Diverge Safe Gaurd
+      //   ServoLW.sendTorqueControlCommand(0);
+      //   ServoRW.sendTorqueControlCommand(0);
+      //   while (true) {
+      //     Serial.println("Mass matrix Singularity Error. Change mode to Off Mode...");
+      //     x.setZero();
+      //     u.setZero();
+      //     Estimator.reset_estimator();
+      //     if (receiver.readData()) {
+      //       receiver.updateData();
+      //     }
+      //     delay(500);
+      //     if (!receiver.isRun()) {
+      //       return;
+      //     }
+      //   }
+      // }
+
+      HR_controller.controlHipServos(Pol.get_theta_hips());
+
+      VYB_controller.computeGainK(h_d);
+      VYB_controller.computeInput(x_d, x);
+      VYB_controller.sendControlCommand();
+      u = VYB_controller.getInputVector();
+      Pol.setState(x);
+      Pol.setInput(u);
+      // MPU6050.printData();
 
       // state estimation
       if (!Estimator.estimate_state(x, z)) {
@@ -117,52 +156,54 @@ void loop() {
             return;
           }
         }
-      };
-      // Estimator.printAllEstimationData();
-      HR_controller.controlHipServos(Pol.get_theta_hips());
+      }
 
-      VYB_controller.computeGainK(h_d);
-      VYB_controller.computeInput(x_d, x);
-      VYB_controller.sendControlCommand();
-      u = VYB_controller.getInputVector();
-      Pol.setState(x);
-      Pol.setInput(u);
-      // MPU6050.printData();
-      Serial.print("theta:");Serial.print(x(0), 6);Serial.print(" ");
-      Serial.print("theta_dot:");Serial.print(x(1), 6);Serial.print(" ");
-      Serial.print("v:");Serial.print(x(2), 6);Serial.print(" ");
-      Serial.print("psi_dot:");Serial.print(x(3), 6);Serial.print(" ");
-      Serial.print("u_RW:");Serial.print(u(0), 6);Serial.print(" ");
-      Serial.print("u_LW:");Serial.print(u(1), 6);Serial.print(" ");
+      ///// Logging /////
+      WIFI_Logger.logTimeStamp(millis() - time_ref);  // 시간 기록
+      // state 기록
+      WIFI_Logger.logValue("h_d", h_d);
+      WIFI_Logger.logValue("theta_eq", x_d(0));
+      WIFI_Logger.logValue("v_d", x_d(2));
+      WIFI_Logger.logValue("psi_dot_d", x_d(3));
 
-    } else if (receiver.isReset()){
+      WIFI_Logger.logValue("theta_hat", x(0));
+      WIFI_Logger.logValue("theta_dot_hat", x(1));  // 시간 기록
+      WIFI_Logger.logValue("v_hat", x(2));          // 시간 기록
+      WIFI_Logger.logValue("psi_dot_hat", x(3));    // 시간 기록
+
+      WIFI_Logger.logValue("tau_RW", u(0));  // 시간 기록
+      WIFI_Logger.logValue("tau_LW", u(1));  // 시간 기록
+
+      WIFI_Logger.logValue("acc_x", z(0));
+      WIFI_Logger.logValue("acc_y", z(1));  // 시간 기록
+      WIFI_Logger.logValue("acc_z", z(2));  // 시간 기록
+      WIFI_Logger.logValue("gyr_x", z(3));  // 시간 기록
+      WIFI_Logger.logValue("gyr_y", z(4));
+      WIFI_Logger.logValue("gyr_z", z(5));         // 시간 기록
+      WIFI_Logger.logValue("theta_dot_RW", z(6));  // 시간 기록
+      WIFI_Logger.logValue("theta_dot_LW", z(7));  // 시간 기록
+                                                   ////////////////////
+    } else if (receiver.isReset()) {
+      // Estimator Reset
       x.setZero();
       u.setZero();
       Estimator.reset_estimator();
+      WIFI_Logger.resetLogData();
+      time_ref = millis();
     } else {
-      
-      Serial.println("Off Mode");
+      // Off Mode
       ServoLW.sendTorqueControlCommand(0);
       ServoRW.sendTorqueControlCommand(0);
-      
-      float h_d, phi_d;
-      float v_d, dpsi_d;
-      receiver.updateDesiredStates();
-      h_d = receiver.getDesiredHeight();
-      // phi_d = receiver.getDesiredRoll();
-      phi_d = 0;  // roll control diable
-      v_d = receiver.getDesiredVel();
-      dpsi_d = receiver.getDesiredYawVel();
 
+      WIFI_Logger.handleClientRequests();  // Log Data 전송
 
       Pol.setHR(h_d, phi_d);
       Pol.calculate_com_and_inertia();
       Pol.get_theta_eq(x_d(0));
-      x_d.segment<2>(2) << v_d, dpsi_d;
 
       Pol.setState(x);
       Pol.setInput(u);
-      
+
       // measurement update
       MPU6050.readData();
       MPU6050.getIMUMeasurement(z);
@@ -186,13 +227,57 @@ void loop() {
           }
         }
       }
+
+      ///// Logging /////
+      WIFI_Logger.logTimeStamp(millis() - time_ref); // 시간 기록
+
+      WIFI_Logger.logValue("h_d", h_d);
+      WIFI_Logger.logValue("theta_eq", x_d(0));
+      WIFI_Logger.logValue("v_d", x_d(2));
+      WIFI_Logger.logValue("psi_dot_d", x_d(3));
+
+      WIFI_Logger.logValue("theta_hat", x(0));
+      WIFI_Logger.logValue("theta_dot_hat", x(1));
+      WIFI_Logger.logValue("v_hat", x(2));
+      WIFI_Logger.logValue("psi_dot_hat", x(3));
+
+      WIFI_Logger.logValue("tau_RW", u(0));
+      WIFI_Logger.logValue("tau_LW", u(1));
+
+      WIFI_Logger.logValue("acc_x", z(0));
+      WIFI_Logger.logValue("acc_y", z(1));
+      WIFI_Logger.logValue("acc_z", z(2));
+      WIFI_Logger.logValue("gyr_x", z(3));
+      WIFI_Logger.logValue("gyr_y", z(4));
+      WIFI_Logger.logValue("gyr_z", z(5));
+      WIFI_Logger.logValue("theta_dot_RW", z(6));
+      WIFI_Logger.logValue("theta_dot_LW", z(7));
+      ////////////////////
       //  Estimator.printAllEstimationData();
-      Serial.print("theta:");Serial.print(x(0)*180/M_PI, 6);Serial.print(" ");
-      Serial.print("theta_dot:");Serial.print(x(1)*180/M_PI, 6);Serial.print(" ");
-      Serial.print("v:");Serial.print(x(2), 6);Serial.print(" ");
-      Serial.print("psi_dot:");Serial.print(x(3)*180/M_PI, 6);Serial.print(" ");
-      Serial.print("u_RW:");Serial.print(u(0), 6);Serial.print(" ");
-      Serial.print("u_LW:");Serial.print(u(1), 6);Serial.print(" ");
+      serialPrintStates();
+      Serial.println(" Off Mode");
     }
   }
 }
+
+
+  void serialPrintStates() {
+    Serial.print("theta:");
+    Serial.print(x(0) * 180 / M_PI, 6);
+    Serial.print(" ");
+    Serial.print("theta_dot:");
+    Serial.print(x(1) * 180 / M_PI, 6);
+    Serial.print(" ");
+    Serial.print("v:");
+    Serial.print(x(2), 6);
+    Serial.print(" ");
+    Serial.print("psi_dot:");
+    Serial.print(x(3) * 180 / M_PI, 6);
+    Serial.print(" ");
+    Serial.print("u_RW:");
+    Serial.print(u(0), 6);
+    Serial.print(" ");
+    Serial.print("u_LW:");
+    Serial.print(u(1), 6);
+    Serial.print(" ");
+  }
