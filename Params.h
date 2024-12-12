@@ -30,9 +30,13 @@ const float PHI_MIN = -30.0;  // phi 최소값 (degree)
 const float PHI_MAX = 30.0;   // phi 최대값 (degree)
 
 const float VEL_MAX = 0.5;  // 최대 속도 (m/s)
-const float YAW_MAX = 1.5;    // 최대 yaw angular velocity (rad/s)
+const float YAW_MAX = 1.5;  // 최대 yaw angular velocity (rad/s)
 
-const float MAX_TORQUE_COMMAND = 200.000; // 최대 torque command
+const float MAX_TORQUE_COMMAND = 200.000;  // 최대 torque command
+
+// 핫스팟 정보 입력 -> 정보만 입력하면 와이파이 연결 된다.
+const char* ssid = "Jeongbin";       // 핫스팟 이름
+const char* password = "james0928";  // 핫스팟 비밀번호
 
 const float dt = 0.012;  // sampling time
 
@@ -95,13 +99,13 @@ inline Properties createDefaultProperties() {
   Properties props = {
     0.075 * cos(M_PI / 6.0),  // a
     0.075 * sin(M_PI / 6.0),  // b
-    0.106,                  // l1
-    0.077,                  // l2
-    0.050,                  // l3
-    0.137,                  // l4
-    0.008,                  // l5
-    0.123,                  // L
-    0.0762                  // R
+    0.106,                    // l1
+    0.077,                    // l2
+    0.050,                    // l3
+    0.137,                    // l4
+    0.008,                    // l5
+    0.123,                    // L
+    0.0762                    // R
   };
 
   // Mainbody

@@ -6,6 +6,7 @@
 #include "IMU.h"
 #include "POL.h"
 #include "EKF.h"
+#include "Logger.h"
 
 
 // Properties와 Receiver, Controller 초기화
@@ -17,17 +18,16 @@ MGServo ServoRW(2, RS485);
 Receiver receiver(Serial2);
 IMU MPU6050;
 
-
 HRController HR_controller;
 VYBController VYB_controller(ServoRW, ServoLW);
 EKF Estimator(Pol);
 
+Logger WIFI_Logger(ssid, password);
 
 Eigen::Matrix<float, 4, 1> x = Eigen::Matrix<float, 4, 1>::Zero();
 Eigen::Matrix<float, 4, 1> x_d = Eigen::Matrix<float, 4, 1>::Zero();
 Eigen::Matrix<float, 2, 1> u = Eigen::Matrix<float, 2, 1>::Zero();
 Eigen::Matrix<float, 8, 1> z = Eigen::Matrix<float, 8, 1>::Zero();
-
 
 int i = 0;
 unsigned long previousMillis = 0;

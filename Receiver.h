@@ -1,7 +1,7 @@
-#include "HardwareSerial.h"
 #ifndef RECEIVER_H
 #define RECEIVER_H
 
+#include "HardwareSerial.h"
 #include <sbus.h>
 #include "Params.h"
 

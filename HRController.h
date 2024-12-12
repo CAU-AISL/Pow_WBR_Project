@@ -1,7 +1,7 @@
-#include "HardwareSerial.h"
 #ifndef HRCONTROLLER_H
 #define HRCONTROLLER_H
 
+#include "HardwareSerial.h"
 #include <ESP32Servo.h>
 #include "Params.h"
 
