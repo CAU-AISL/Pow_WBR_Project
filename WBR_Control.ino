@@ -54,7 +54,7 @@ void setup() {
   RS485.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
 
   // WIFI 연결
-  // WIFI_Logger.begin();
+  WIFI_Logger.begin();
 
   unsigned long receiver_timer_start = millis();
   const unsigned long timeout = 5000;  // 타임아웃 5초 설정
@@ -159,29 +159,29 @@ void loop() {
 
 
       ///// Logging /////
-      // WIFI_Logger.logTimeStamp(millis() - time_ref);  // 시간 기록
-      // // state 기록
-      // WIFI_Logger.logValue("h_d", h_d);
-      // WIFI_Logger.logValue("theta_eq", x_d(0));
-      // WIFI_Logger.logValue("v_d", x_d(2));
-      // WIFI_Logger.logValue("psi_dot_d", x_d(3));
+      WIFI_Logger.logTimeStamp(millis() - time_ref);  // 시간 기록
+      // state 기록
+      WIFI_Logger.logValue("h_d", h_d);
+      WIFI_Logger.logValue("theta_eq", x_d(0));
+      WIFI_Logger.logValue("v_d", x_d(2));
+      WIFI_Logger.logValue("psi_dot_d", x_d(3));
 
-      // WIFI_Logger.logValue("theta_hat", x(0));
-      // WIFI_Logger.logValue("theta_dot_hat", x(1));  // 시간 기록
-      // WIFI_Logger.logValue("v_hat", x(2));          // 시간 기록
-      // WIFI_Logger.logValue("psi_dot_hat", x(3));    // 시간 기록
+      WIFI_Logger.logValue("theta_hat", x(0));
+      WIFI_Logger.logValue("theta_dot_hat", x(1));  // 시간 기록
+      WIFI_Logger.logValue("v_hat", x(2));          // 시간 기록
+      WIFI_Logger.logValue("psi_dot_hat", x(3));    // 시간 기록
 
-      // WIFI_Logger.logValue("tau_RW", u(0));  // 시간 기록
-      // WIFI_Logger.logValue("tau_LW", u(1));  // 시간 기록
+      WIFI_Logger.logValue("tau_RW", u(0));  // 시간 기록
+      WIFI_Logger.logValue("tau_LW", u(1));  // 시간 기록
 
-      // WIFI_Logger.logValue("acc_x", z(0));
-      // WIFI_Logger.logValue("acc_y", z(1));  // 시간 기록
-      // WIFI_Logger.logValue("acc_z", z(2));  // 시간 기록
-      // WIFI_Logger.logValue("gyr_x", z(3));  // 시간 기록
-      // WIFI_Logger.logValue("gyr_y", z(4));
-      // WIFI_Logger.logValue("gyr_z", z(5));         // 시간 기록
-      // WIFI_Logger.logValue("theta_dot_RW", z(6));  // 시간 기록
-      // WIFI_Logger.logValue("theta_dot_LW", z(7));  // 시간 기록
+      WIFI_Logger.logValue("acc_x", z(0));
+      WIFI_Logger.logValue("acc_y", z(1));  // 시간 기록
+      WIFI_Logger.logValue("acc_z", z(2));  // 시간 기록
+      WIFI_Logger.logValue("gyr_x", z(3));  // 시간 기록
+      WIFI_Logger.logValue("gyr_y", z(4));
+      WIFI_Logger.logValue("gyr_z", z(5));         // 시간 기록
+      WIFI_Logger.logValue("theta_dot_RW", z(6));  // 시간 기록
+      WIFI_Logger.logValue("theta_dot_LW", z(7));  // 시간 기록
                                                    ////////////////////
     } else if (receiver.isReset()) {
       // Estimator Reset

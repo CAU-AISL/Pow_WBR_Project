@@ -89,7 +89,7 @@ public:
     float alphaHPF = cutoffFrequencyHPF(0.5);  // HPF 기준 주파수 0.5Hz
 
     // 가속도에 LPF 적용
-    lowPassFilter(acc_vec, acc_vec_prev, alphaLPF);
+    // lowPassFilter(acc_vec, acc_vec_prev, alphaLPF);
 
     // 자이로에 HPF 적용
     // highPassFilter(gyr_vec, gyr_vec_prev, alphaHPF);
