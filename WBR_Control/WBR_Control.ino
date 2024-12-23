@@ -188,14 +188,14 @@ void loop() {
       x.setZero();
       u.setZero();
       Estimator.reset_estimator();
-      // WIFI_Logger.resetLogData();
+      WIFI_Logger.resetLogData();
       time_ref = millis();
     } else {
       // Off Mode
       ServoLW.sendTorqueControlCommand(0);
       ServoRW.sendTorqueControlCommand(0);
 
-      // WIFI_Logger.handleClientRequests();  // Log Data 전송
+      WIFI_Logger.handleClientRequests();  // Log Data 전송
 
       Pol.setHR(h_d, phi_d);
       Pol.calculate_com_and_inertia();
