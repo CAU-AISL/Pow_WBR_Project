@@ -61,7 +61,7 @@ void setup() {
 
   // SBUS 데이터 수신 대기 (타임아웃 처리)
   while (!receiver.readData()) {
-    if (micros() - receiver_timer_start > timeout) {
+    if (millis() - receiver_timer_start > timeout) {
       Serial.println("Timeout: No data received from SBUS.");
       receiver_timer_start = millis();  // 타임아웃 초기화
     }
