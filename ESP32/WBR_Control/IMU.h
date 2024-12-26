@@ -10,14 +10,14 @@ public:
   int16_t Tmp;
   Eigen::Matrix<int16_t, 3, 1> acc_raw_vec, gyr_raw_vec;
   Eigen::Matrix<float, 3, 1> acc_vec, gyr_vec;
-  Eigen::Matrix<float, 3, 1> acc_vec_prev, gyr_vec_prev;
+  Eigen::Matrix<float, 3, 1> acc_vec_prev, gyr_vec_prev, gyr_vec_prev_input;
   float temperature;  // 온도 (섭씨)
 
   // 캘리브레이션 값
   // Eigen::Vector3f gyro_bias{ -8.38f * M_PI / 180, 0.05f * M_PI / 180, 0.68f * M_PI / 180 };  // (rad/s)
   // Eigen::Vector3f accel_bias{ 0.07f * 9.80665f, -0.02f * 9.80665f, -0.1f * 9.80665f };       // (m/s^2)
-  Eigen::Vector3f gyro_bias{ -0.15315f, -0.00129f, -0.00132f};  // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.583683f, -0.22948f, -1.137587f };       // (m/s^2)
+  Eigen::Vector3f gyro_bias{ -0.15315f, -0.00129f, -0.00132f };    // (rad/s)
+  Eigen::Vector3f accel_bias{ 0.583683f, -0.22948f, -1.137587f };  // (m/s^2)
 
 
 
@@ -43,6 +43,7 @@ public:
     gyr_vec.setZero();
     acc_vec_prev.setZero();
     gyr_vec_prev.setZero();
+    gyr_vec_prev_input.setZero();
     temperature = 0;  // 온도 (섭씨)
   }
 
@@ -89,10 +90,10 @@ public:
     float alphaHPF = cutoffFrequencyHPF(0.5);  // HPF 기준 주파수 0.5Hz
 
     // 가속도에 LPF 적용
-    // lowPassFilter(acc_vec, acc_vec_prev, alphaLPF);
+    lowPassFilter(acc_vec, acc_vec_prev, alphaLPF);
 
     // 자이로에 HPF 적용
-    // highPassFilter(gyr_vec, gyr_vec_prev, alphaHPF);
+    highPassFilter(gyr_vec, gyr_vec_prev_input, gyr_vec_prev, alphaHPF);
   }
 
   void lowPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, const float alpha) {
@@ -100,10 +101,11 @@ public:
     prevOutput = input;
   }
 
-  void highPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, const float alpha) {
-    Eigen::Vector3f temp = input;
-    input = alpha * (prevOutput + input - prevOutput);
-    prevOutput = temp;
+  void highPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevInput, Eigen::Vector3f& prevOutput, const float alpha) {
+    Eigen::Vector3f output = alpha * (prevOutput + input - prevInput);
+    prevInput = input;
+    prevOutput = output;
+    input = output;
   }
 
   float cutoffFrequencyLPF(float f_c) {
