@@ -22,12 +22,12 @@ private:
   HardwareSerial& RS485;
 
   uint8_t motorID;
-  int8_t temperature;
-  uint16_t encoder;
-  int16_t iq_raw;
-  int16_t speed_raw;
-  float iq;
-  float speed;
+  int8_t temperature;  // temperature (℃)
+  uint16_t encoder;    
+  int16_t iq_raw;      // raw current (LSD)
+  int16_t speed_raw;   // speed raw (LSD)
+  float iq;            // current (A)
+  float speed;         // speed (deg/s)
 
 
 public:
@@ -41,6 +41,7 @@ public:
     speed = 0;
   }
 
+  //////// Getter functions ////////////////
   uint8_t getMotorID() const {
     return motorID;
   }
@@ -53,14 +54,14 @@ public:
     return encoder;
   }
 
-  int16_t getMotorIq() const {
+  float getMotorIq() const {
     return iq;
   }
 
-  int16_t getMotorSpeed() const {
+  float getMotorSpeed() const {
     return speed;
   }
-
+  ////////////////////////////////////////////
 
   // 토크 제어 명령 전송
   bool sendTorqueControlCommand(int16_t iqControl) {
@@ -69,7 +70,7 @@ public:
     // Serial.print("Command: ");
     // Serial.print(iqControl);
     // Serial.println();
-    
+
 
     uint8_t command[commandLength];
     uint8_t response[responseLength];
