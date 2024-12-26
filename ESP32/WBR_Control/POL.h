@@ -177,6 +177,8 @@ public:
 
   void print_all_variables();
 
+  void solve_inverse_kinematics();
+
 private:
 
   void prepare_calculate();
@@ -189,7 +191,6 @@ private:
   void calculate_fx();
   void calculate_fu();
   inline Eigen::Matrix<float, 3, 3> rotation_matrix_y(float theta);
-  void solve_inverse_kinematics();
   void solve_forward_kinematics();
 };
 
@@ -251,10 +252,7 @@ bool POL::calculate_Minv() {
 
 void POL::calculate_nle() {
   // First equation (nle(0))
-  nle(0) = -psi_dot_2 * (I_B_B(2, 2) + I_B_LW(2, 2) + I_B_RW(2, 2) 
-            - m_B * (h * p_bcom(0) + p_bcom(0) * p_bcom(2) - cos_theta_2 * (h * p_bcom(0) * 2.0 + p_bcom(0) * p_bcom(2) * 2.0) 
-            - sin_cos_theta * (h * p_bcom(2) * 2.0 + h_2 - p_bcom(0) * p_bcom(0) + p_bcom(2) * p_bcom(2))) - cos_theta_2 * (I_B_B(2, 2) * 2.0 + I_B_LW(2, 2) * 2.0 + I_B_RW(2, 2) * 2.0)
-             + sin_cos_theta * (I_B_B(0, 0) - I_B_B(2, 2) + I_B_LW(0, 0) + I_B_RW(0, 0) - I_B_LW(2, 2) - I_B_RW(2, 2)) + (L * (cos_theta * (I_B_LW(1, 0) - I_B_RW(1, 0)) + sin_theta * (I_B_LW(2, 1) - I_B_RW(2, 1)))) / R)
+  nle(0) = -psi_dot_2 * (I_B_B(2, 2) + I_B_LW(2, 2) + I_B_RW(2, 2) - m_B * (h * p_bcom(0) + p_bcom(0) * p_bcom(2) - cos_theta_2 * (h * p_bcom(0) * 2.0 + p_bcom(0) * p_bcom(2) * 2.0) - sin_cos_theta * (h * p_bcom(2) * 2.0 + h_2 - p_bcom(0) * p_bcom(0) + p_bcom(2) * p_bcom(2))) - cos_theta_2 * (I_B_B(2, 2) * 2.0 + I_B_LW(2, 2) * 2.0 + I_B_RW(2, 2) * 2.0) + sin_cos_theta * (I_B_B(0, 0) - I_B_B(2, 2) + I_B_LW(0, 0) + I_B_RW(0, 0) - I_B_LW(2, 2) - I_B_RW(2, 2)) + (L * (cos_theta * (I_B_LW(1, 0) - I_B_RW(1, 0)) + sin_theta * (I_B_LW(2, 1) - I_B_RW(2, 1)))) / R)
            - g * m_B * (sin_theta * (h + p_bcom(2)) + p_bcom(0) * cos_theta)
            + (psi_dot * v * (cos_theta * (I_B_LW(1, 0) + I_B_RW(1, 0)) + sin_theta * (I_B_LW(2, 1) + I_B_RW(2, 1)))) / R;
 
