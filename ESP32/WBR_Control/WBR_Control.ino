@@ -28,6 +28,7 @@ Eigen::Matrix<float, 4, 1> x = Eigen::Matrix<float, 4, 1>::Zero();
 Eigen::Matrix<float, 4, 1> x_d = Eigen::Matrix<float, 4, 1>::Zero();
 Eigen::Matrix<float, 2, 1> u = Eigen::Matrix<float, 2, 1>::Zero();
 Eigen::Matrix<float, 8, 1> z = Eigen::Matrix<float, 8, 1>::Zero();
+Eigen::Matrix<float, 2, 1> iq_vec = Eigen::Matrix<float, 2, 1>::Zero();
 
 int i = 0;
 unsigned long previousMillis = 0;
@@ -91,53 +92,17 @@ void loop() {
     if (receiver.isRun()) {
       // Running Mode
 
-      receiver.updateDesiredStates();
-      h_d = receiver.getDesiredHeight();
-      // phi_d = receiver.getDesiredRoll();
-      phi_d = 0;  // roll control diable
-      v_d = receiver.getDesiredVel();
-      dpsi_d = receiver.getDesiredYawVel();
-
-      Pol.setHR(h_d, phi_d);
-      Pol.calculate_com_and_inertia();
-      Pol.get_theta_eq(x_d(0));
-      x_d.segment<2>(2) << v_d, dpsi_d;
-
       // measurement update
       MPU6050.readData();
       MPU6050.getIMUMeasurement(z);
       VYB_controller.getMotorSpeedMeasurement(z);
-
-      // // state estimation
-      // if (!Estimator.estimate_state(x, z)) {
-      //   // Diverge Safe Gaurd
-      //   ServoLW.sendTorqueControlCommand(0);
-      //   ServoRW.sendTorqueControlCommand(0);
-      //   while (true) {
-      //     Serial.println("Mass matrix Singularity Error. Change mode to Off Mode...");
-      //     x.setZero();
-      //     u.setZero();
-      //     Estimator.reset_estimator();
-      //     if (receiver.readData()) {
-      //       receiver.updateData();
-      //     }
-      //     delay(500);
-      //     if (!receiver.isRun()) {
-      //       return;
-      //     }
-      //   }
-      // }
-
-      HR_controller.controlHipServos(Pol.get_theta_hips());
-
-      VYB_controller.computeGainK(h_d);
-      VYB_controller.computeInput(x_d, x);
-      VYB_controller.sendControlCommand();
-      u = VYB_controller.getInputVector();
-      // MPU6050.printData();
+      VYB_controller.getMotorCurrentMeasurement(iq_vec);
+      
+      //// update Pol state and input for EKF ////
       Pol.setState(x);
       Pol.setInput(u);
-      // state estimation
+
+      //// state estimation ////
       if (!Estimator.estimate_state(x, z)) {
         // Diverge Safe Gaurd
         ServoLW.sendTorqueControlCommand(0);
@@ -157,8 +122,30 @@ void loop() {
         }
       }
 
+      //// Get Desired States from receiver ////
+      receiver.updateDesiredStates();
+      h_d = receiver.getDesiredHeight();
+      // phi_d = receiver.getDesiredRoll();
+      phi_d = 0;  // roll control diable
+      v_d = receiver.getDesiredVel();
+      dpsi_d = receiver.getDesiredYawVel();
+      x_d.segment<2>(2) << v_d, dpsi_d;
 
-      ///// Logging /////
+      //// calculate CoM and Inertia from CoM Calculator ////
+      Pol.setHR(h_d, phi_d);
+      Pol.calculate_com_and_inertia();  // 여기서 inverse kinematics로 theta_hips도 계산됨
+      Pol.get_theta_eq(x_d(0));         // update desired pitch angle with equilibrium point
+
+      //// compute VYB controller gain ////
+      VYB_controller.computeGainK(h_d);
+      VYB_controller.computeInput(x_d, x);
+
+      //// Send control command of HR controller and VYB controller
+      HR_controller.controlHipServos(Pol.get_theta_hips());
+      VYB_controller.sendControlCommand();
+      u = VYB_controller.getInputVector();     
+
+      ///// Logging ////////////////////////////////////////////////////////////////////////////////
       WIFI_Logger.logTimeStamp(millis() - time_ref);  // 시간 기록
       // state 기록
       WIFI_Logger.logValue("h_d", h_d);
@@ -182,7 +169,10 @@ void loop() {
       WIFI_Logger.logValue("gyr_z", z(5));         // 시간 기록
       WIFI_Logger.logValue("theta_dot_RW", z(6));  // 시간 기록
       WIFI_Logger.logValue("theta_dot_LW", z(7));  // 시간 기록
-                                                   ////////////////////
+
+      WIFI_Logger.logValue("current_RW", iq_vec(0));
+      WIFI_Logger.logValue("current_LW", iq_vec(1));
+      ///////////////////////////////////////////////////////////////////////////////////////////////
     } else if (receiver.isReset()) {
       // Estimator Reset
       x.setZero();
@@ -194,6 +184,7 @@ void loop() {
       // Off Mode
       ServoLW.sendTorqueControlCommand(0);
       ServoRW.sendTorqueControlCommand(0);
+      u.setZero();
 
       WIFI_Logger.handleClientRequests();  // Log Data 전송
 
@@ -280,4 +271,22 @@ void loop() {
     Serial.print("u_LW:");
     Serial.print(u(1), 6);
     Serial.print(" ");
+    Serial.print("acc_x:");
+    Serial.print(z(0), 6);
+    Serial.print(" ");
+    Serial.print("acc_y:");
+    Serial.print(z(1), 6);
+    Serial.print(" ");
+    Serial.print("acc_z:");
+    Serial.print(z(2), 6);
+    Serial.print(" ");
+    Serial.print("gyro_x:");
+    Serial.print(z(3), 6);
+    Serial.print(" ");
+    Serial.print("gyro_y:");
+    Serial.print(z(4), 6);
+    Serial.print(" ");
+    Serial.print("gyro_z:");
+    Serial.print(z(5), 6);
+    Serial.print(" ");    
   }
