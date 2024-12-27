@@ -197,6 +197,11 @@ public:
     ServoRW.sendTorqueControlCommand(static_cast<int16_t>(u_RW));
     ServoLW.sendTorqueControlCommand(static_cast<int16_t>(u_LW));
   }
+
+  void sendReadStateCommand() {
+    ServoRW.sendCommandReadMotorState2();
+    ServoLW.sendCommandReadMotorState2();
+  }
 };
 
 #endif  // VYB_CONTROLLER_H

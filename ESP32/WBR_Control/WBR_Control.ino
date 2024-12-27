@@ -146,17 +146,17 @@ void loop() {
 
     if (receiver.isRun()) {
       // Running Mode
-
-      // measurement update
-      MPU6050.readData();
-      MPU6050.getIMUMeasurement(z);
-
-      // TODO : motor speed가 k-1번째 값을 가져오기 때문에 수정 필요
-      VYB_controller.getMotorSpeedMeasurement(z);
-
       //// update Pol state and input for EKF ////
       Pol.setState(x);
       Pol.setInput(u);
+
+      // measurement update
+      MPU6050.readData(); // read k-th IMU measurements
+      MPU6050.getIMUMeasurement(z);
+
+      VYB_controller.sendReadStateCommand(); // read k-th motor speed
+      VYB_controller.getMotorSpeedMeasurement(z);
+      VYB_controller.getMotorCurrentMeasurement(iq_vec);
 
       //// state estimation ////
       if (!Estimator.estimate_state(x, z)) {
