@@ -11,7 +11,7 @@
 
 // 핀 번호 정의
 #define LH_PIN 12  // 왼쪽 서보 핀
-#define RH_PIN 13  // 오른쪽 서보 핀
+#define RH_PIN 11  // 오른쪽 서보 핀
 
 #define SBUS_RX_PIN 17  // SBUS 수신 핀
 
@@ -32,7 +32,7 @@ const float PHI_MAX = 30.0;   // phi 최대값 (degree)
 const float VEL_MAX = 1;  // 최대 속도 (m/s)
 const float YAW_MAX = 1.5;  // 최대 yaw angular velocity (rad/s)
 
-const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
+const float MAX_TORQUE_COMMAND = 80.000;  // 최대 torque command
 
 // 핫스팟 정보 입력 -> 정보만 입력하면 와이파이 연결 된다.
 // const char* ssid = "Jeongbin";       // 핫스팟 이름

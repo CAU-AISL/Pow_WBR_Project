@@ -16,6 +16,7 @@ private:
   std::map<String, std::vector<float>> dataStorage;
   std::vector<uint32_t> timeStamps;
 
+
 public:
   Logger(const char* wifiSSID, const char* wifiPassword, int port = 80)
     : server(port), ssid(wifiSSID), password(wifiPassword) {}
@@ -62,7 +63,7 @@ public:
     // 헤더 생성
     csvData += "TimeStamp,";
     for (const auto& field : dataStorage) {
-        csvData += field.first + ",";
+      csvData += field.first + ",";
     }
     csvData += "\n";  // 헤더 끝
 
@@ -72,35 +73,35 @@ public:
 
     // 데이터 생성
     for (size_t i = 0; i < dataSize; i++) {
-        csvData += String(timeStamps[i]) + ",";
-        for (const auto& field : dataStorage) {
-            if (i < field.second.size()) {
-                csvData += String(field.second[i], 8) + ",";  // 소수점 8자리까지
-            } else {
-                csvData += ",";
-            }
+      csvData += String(timeStamps[i]) + ",";
+      for (const auto& field : dataStorage) {
+        if (i < field.second.size()) {
+          csvData += String(field.second[i], 8) + ",";  // 소수점 8자리까지
+        } else {
+          csvData += ",";
         }
-        csvData += "\n";  // 데이터 한 줄 끝
+      }
+      csvData += "\n";  // 데이터 한 줄 끝
 
-        // 청크 크기가 되면 데이터를 전송
-        currentSize += csvData.length();
-        if (currentSize >= chunkSize) {
-            client.print(csvData);
-            csvData = "";  // 버퍼 비우기
-            currentSize = 0;  // 크기 초기화
-        }
+      // 청크 크기가 되면 데이터를 전송
+      currentSize += csvData.length();
+      if (currentSize >= chunkSize) {
+        client.print(csvData);
+        csvData = "";     // 버퍼 비우기
+        currentSize = 0;  // 크기 초기화
+      }
     }
 
     // 남은 데이터 전송
     if (csvData.length() > 0) {
-        client.print(csvData);
+      client.print(csvData);
     }
 
     Serial.println("CSV file sent to client.");
-}
+  }
 
   void handleClientRequests() {
-    WiFiClient client = server.available();
+    WiFiClient client = server.accept();
 
     // Wi-Fi 연결 상태 확인
     if (WiFi.status() != WL_CONNECTED) {
@@ -125,7 +126,7 @@ public:
       Serial.println("New Client connected.");
       delay(500);
       String request = client.readStringUntil('\r');
-      client.flush();
+      client.clear();
 
       // 요청 처리 로직
       if (request.indexOf("/logdata") != -1) {

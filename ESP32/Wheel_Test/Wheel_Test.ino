@@ -5,7 +5,6 @@
 #include "MGServo.h"
 #include "IMU.h"
 #include "POL.h"
-#include "EKF.h"
 #include "Logger.h"
 
 
@@ -20,7 +19,6 @@ IMU MPU6050;
 
 HRController HR_controller;
 VYBController VYB_controller(ServoRW, ServoLW);
-EKF Estimator(Pol);
 
 Logger WIFI_Logger(ssid, password);
 
@@ -28,6 +26,7 @@ Eigen::Matrix<float, 4, 1> x = Eigen::Matrix<float, 4, 1>::Zero();
 Eigen::Matrix<float, 4, 1> x_d = Eigen::Matrix<float, 4, 1>::Zero();
 Eigen::Matrix<float, 2, 1> u = Eigen::Matrix<float, 2, 1>::Zero();
 Eigen::Matrix<float, 8, 1> z = Eigen::Matrix<float, 8, 1>::Zero();
+Eigen::Matrix<float, 2, 1> iq_vec = Eigen::Matrix<float, 2, 1>::Zero();
 
 int i = 0;
 unsigned long previousMillis = 0;
@@ -35,12 +34,42 @@ unsigned long time_ref = 0;
 float h_d = HEIGHT_MAX, phi_d = 0;
 float v_d = 0, dpsi_d = 0;
 
+std::vector<float> command_vec;  // torque command vector (Nm)
+float command_max = 1;
+float command_increment = 0.01;  // Nm
+int command_idx = 0;
+int dt_command = 120;  // milli sec
+
 void serialPrintStates();
 
 void setup() {
+  for (float torque = command_increment; torque < command_max; torque += command_increment) {
+    command_vec.push_back(torque);
+    command_vec.push_back(-torque);
+  }
+
   Serial.begin(115200);
   receiver.begin();
   HR_controller.attachServos(LH_PIN, RH_PIN);
+
+  ///////////////////////////////////////////////
+    // PSRAM이 활성화 되었는지 확인
+  if (psramFound()) {
+    Serial.println("PSRAM is available!");
+  } else {
+    Serial.println("PSRAM not available!");
+  }
+  
+  // PSRAM 초기화 (필요할 경우)
+  if (!psramInit()) {
+    Serial.println("PSRAM initialization failed!");
+  } else {
+    Serial.println("PSRAM initialized successfully!");
+  }
+
+  // PSRAM 크기 확인
+  Serial.printf("PSRAM size: %d bytes\n", ESP.getPsramSize());
+  ///////////////////////////////////////////////////////////////
 
   if (!MPU6050.begin()) {
     Serial.println("[ERROR] Fail to initialize IMU.");
@@ -61,7 +90,7 @@ void setup() {
 
   // SBUS 데이터 수신 대기 (타임아웃 처리)
   while (!receiver.readData()) {
-    if (micros() - receiver_timer_start > timeout) {
+    if (millis() - receiver_timer_start > timeout) {
       Serial.println("Timeout: No data received from SBUS.");
       receiver_timer_start = millis();  // 타임아웃 초기화
     }
@@ -90,106 +119,66 @@ void loop() {
 
     if (receiver.isRun()) {
       // Running Mode
+      if (i >= dt_command / (dt * 1000)) {
+        if (command_idx < command_vec.size()) {
+          u << command_vec.at(command_idx), command_vec.at(command_idx);
+          command_idx++;
+          i = 0;
+        } else {
+          u << 0, 0;
+        }
+      }
 
       receiver.updateDesiredStates();
       h_d = receiver.getDesiredHeight();
-      // phi_d = receiver.getDesiredRoll();
       phi_d = 0;  // roll control diable
-      v_d = receiver.getDesiredVel();
-      dpsi_d = receiver.getDesiredYawVel();
 
       Pol.setHR(h_d, phi_d);
-      Pol.calculate_com_and_inertia();
-      Pol.get_theta_eq(x_d(0));
-      x_d.segment<2>(2) << v_d, dpsi_d;
+      Pol.solve_inverse_kinematics();
 
       // measurement update
       MPU6050.readData();
       MPU6050.getIMUMeasurement(z);
       VYB_controller.getMotorSpeedMeasurement(z);
-
-      // // state estimation
-      // if (!Estimator.estimate_state(x, z)) {
-      //   // Diverge Safe Gaurd
-      //   ServoLW.sendTorqueControlCommand(0);
-      //   ServoRW.sendTorqueControlCommand(0);
-      //   while (true) {
-      //     Serial.println("Mass matrix Singularity Error. Change mode to Off Mode...");
-      //     x.setZero();
-      //     u.setZero();
-      //     Estimator.reset_estimator();
-      //     if (receiver.readData()) {
-      //       receiver.updateData();
-      //     }
-      //     delay(500);
-      //     if (!receiver.isRun()) {
-      //       return;
-      //     }
-      //   }
-      // }
+      VYB_controller.getMotorCurrentMeasurement(iq_vec);
 
       HR_controller.controlHipServos(Pol.get_theta_hips());
+      VYB_controller.sendDirectControlCommand(u);
 
-      VYB_controller.computeGainK(h_d);
-      VYB_controller.computeInput(x_d, x);
-      VYB_controller.sendControlCommand();
-      u = VYB_controller.getInputVector();
-      // MPU6050.printData();
-      Pol.setState(x);
-      Pol.setInput(u);
-      // state estimation
-      if (!Estimator.estimate_state(x, z)) {
-        // Diverge Safe Gaurd
-        ServoLW.sendTorqueControlCommand(0);
-        ServoRW.sendTorqueControlCommand(0);
-        while (true) {
-          Serial.println("Mass matrix Singularity Error. Change mode to Off Mode...");
-          x.setZero();
-          u.setZero();
-          Estimator.reset_estimator();
-          if (receiver.readData()) {
-            receiver.updateData();
-          }
-          delay(500);
-          if (!receiver.isRun()) {
-            return;
-          }
-        }
-      }
-
+      // serialPrintStates();
+      Serial.println(" Run Mode");
 
       ///// Logging /////
       WIFI_Logger.logTimeStamp(millis() - time_ref);  // 시간 기록
       // state 기록
       WIFI_Logger.logValue("h_d", h_d);
-      WIFI_Logger.logValue("theta_eq", x_d(0));
-      WIFI_Logger.logValue("v_d", x_d(2));
-      WIFI_Logger.logValue("psi_dot_d", x_d(3));
 
-      WIFI_Logger.logValue("theta_hat", x(0));
-      WIFI_Logger.logValue("theta_dot_hat", x(1));  // 시간 기록
-      WIFI_Logger.logValue("v_hat", x(2));          // 시간 기록
-      WIFI_Logger.logValue("psi_dot_hat", x(3));    // 시간 기록
-
-      WIFI_Logger.logValue("tau_RW", u(0));  // 시간 기록
-      WIFI_Logger.logValue("tau_LW", u(1));  // 시간 기록
+      WIFI_Logger.logValue("tau_RW", u(0));
+      WIFI_Logger.logValue("tau_LW", u(1));
 
       WIFI_Logger.logValue("acc_x", z(0));
-      WIFI_Logger.logValue("acc_y", z(1));  // 시간 기록
-      WIFI_Logger.logValue("acc_z", z(2));  // 시간 기록
-      WIFI_Logger.logValue("gyr_x", z(3));  // 시간 기록
+      WIFI_Logger.logValue("acc_y", z(1));
+      WIFI_Logger.logValue("acc_z", z(2));
+      WIFI_Logger.logValue("gyr_x", z(3));
       WIFI_Logger.logValue("gyr_y", z(4));
-      WIFI_Logger.logValue("gyr_z", z(5));         // 시간 기록
-      WIFI_Logger.logValue("theta_dot_RW", z(6));  // 시간 기록
-      WIFI_Logger.logValue("theta_dot_LW", z(7));  // 시간 기록
-                                                   ////////////////////
+      WIFI_Logger.logValue("gyr_z", z(5));
+      WIFI_Logger.logValue("theta_dot_RW", z(6));
+      WIFI_Logger.logValue("theta_dot_LW", z(7));
+      WIFI_Logger.logValue("iq_RW", iq_vec(0));
+      WIFI_Logger.logValue("iq_LW", iq_vec(1));
+      ////////////////////
+
+      Serial.println("Stack oveflow detector");
+
+      i++;
     } else if (receiver.isReset()) {
       // Estimator Reset
-      x.setZero();
       u.setZero();
-      Estimator.reset_estimator();
       WIFI_Logger.resetLogData();
+      i = 0;
+      command_idx = 0;
       time_ref = millis();
+
     } else {
       // Off Mode
       ServoLW.sendTorqueControlCommand(0);
@@ -197,63 +186,6 @@ void loop() {
 
       WIFI_Logger.handleClientRequests();  // Log Data 전송
 
-      Pol.setHR(h_d, phi_d);
-      Pol.calculate_com_and_inertia();
-      Pol.get_theta_eq(x_d(0));
-
-      Pol.setState(x);
-      Pol.setInput(u);
-
-      // measurement update
-      MPU6050.readData();
-      MPU6050.getIMUMeasurement(z);
-      VYB_controller.getMotorSpeedMeasurement(z);
-      // state estimation
-      if (!Estimator.estimate_state(x, z)) {
-        // Diverge Safe Gaurd
-        ServoLW.sendTorqueControlCommand(0);
-        ServoRW.sendTorqueControlCommand(0);
-        while (true) {
-          Serial.println("Mass matrix Singularity Error. Change mode to Off Mode...");
-          x.setZero();
-          u.setZero();
-          Estimator.reset_estimator();
-          if (receiver.readData()) {
-            receiver.updateData();
-          }
-          delay(500);
-          if (!receiver.isRun()) {
-            return;
-          }
-        }
-      }
-
-      ///// Logging /////
-      // WIFI_Logger.logTimeStamp(millis() - time_ref); // 시간 기록
-
-      // WIFI_Logger.logValue("h_d", h_d);
-      // WIFI_Logger.logValue("theta_eq", x_d(0));
-      // WIFI_Logger.logValue("v_d", x_d(2));
-      // WIFI_Logger.logValue("psi_dot_d", x_d(3));
-
-      // WIFI_Logger.logValue("theta_hat", x(0));
-      // WIFI_Logger.logValue("theta_dot_hat", x(1));
-      // WIFI_Logger.logValue("v_hat", x(2));
-      // WIFI_Logger.logValue("psi_dot_hat", x(3));
-
-      // WIFI_Logger.logValue("tau_RW", u(0));
-      // WIFI_Logger.logValue("tau_LW", u(1));
-
-      // WIFI_Logger.logValue("acc_x", z(0));
-      // WIFI_Logger.logValue("acc_y", z(1));
-      // WIFI_Logger.logValue("acc_z", z(2));
-      // WIFI_Logger.logValue("gyr_x", z(3));
-      // WIFI_Logger.logValue("gyr_y", z(4));
-      // WIFI_Logger.logValue("gyr_z", z(5));
-      // WIFI_Logger.logValue("theta_dot_RW", z(6));
-      // WIFI_Logger.logValue("theta_dot_LW", z(7));
-      ////////////////////
-      //  Estimator.printAllEstimationData();
       serialPrintStates();
       Serial.println(" Off Mode");
     }
@@ -261,23 +193,23 @@ void loop() {
 }
 
 
-  void serialPrintStates() {
-    Serial.print("theta:");
-    Serial.print(x(0) * 180 / M_PI, 6);
-    Serial.print(" ");
-    Serial.print("theta_dot:");
-    Serial.print(x(1) * 180 / M_PI, 6);
-    Serial.print(" ");
-    Serial.print("v:");
-    Serial.print(x(2), 6);
-    Serial.print(" ");
-    Serial.print("psi_dot:");
-    Serial.print(x(3) * 180 / M_PI, 6);
-    Serial.print(" ");
-    Serial.print("u_RW:");
-    Serial.print(u(0), 6);
-    Serial.print(" ");
-    Serial.print("u_LW:");
-    Serial.print(u(1), 6);
-    Serial.print(" ");
-  }
+void serialPrintStates() {
+  Serial.print("theta:");
+  Serial.print(x(0) * 180 / M_PI, 6);
+  Serial.print(" ");
+  Serial.print("theta_dot:");
+  Serial.print(x(1) * 180 / M_PI, 6);
+  Serial.print(" ");
+  Serial.print("v:");
+  Serial.print(x(2), 6);
+  Serial.print(" ");
+  Serial.print("psi_dot:");
+  Serial.print(x(3) * 180 / M_PI, 6);
+  Serial.print(" ");
+  Serial.print("u_RW:");
+  Serial.print(u(0), 6);
+  Serial.print(" ");
+  Serial.print("u_LW:");
+  Serial.print(u(1), 6);
+  Serial.print(" ");
+}
