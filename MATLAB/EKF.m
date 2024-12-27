@@ -78,7 +78,7 @@ Bd = sys_d.B;                    % 이산화된 B 행렬
 % Q_ = diag([1 1 1 1]);  % 상태 가중치
 % R_ = diag([1 1]);            % 입력 가중치
 
-Q_ = diag([10 1 1000 1000]);  % 상태 가중치
+Q_ = diag([10 10 5000 100]);  % 상태 가중치
 R_ = diag([1e4 1e4]);            % 입력 가중치
 
 % LQR Gain 계산
@@ -112,8 +112,9 @@ axis equal;
 
 % EKF covariance matrix
 P = eye(4); % 초기 추정 오차 공분산 행렬
-R_cov = diag([1.54239e-3, 1.93287e-3, 2.36791e-3, 3.11351e-6, 4.12642e-6, 5.37135e-6, 1e-5, 1e-5]); % 측정 오차 공분산 행렬
-Q_cov = diag([4e-5, 1e-4, 4e-5, 1e-4]); % 프로세스 노이즈 공분산 행렬
+% R_cov = diag([1.54239e-3, 1.93287e-3, 2.36791e-3, 3.11351e-6, 4.12642e-6, 5.37135e-6, 3.046e-6, 3.046e-6]); % 측정 오차 공분산 행렬
+R_cov = diag([1.54239e-1, 1.93287e-1, 2.36791e-1, 3.11351e-6, 4.12642e-6, 5.37135e-6, 3.046e-6, 3.046e-6]); % 측정 오차 공분산 행렬
+Q_cov = diag([4e-5, 1e-4, 4e-5, 1e-6]); % 프로세스 노이즈 공분산 행렬
 
 % 초기 설정
 x_eq = [theta_eq; 0; 0; 0];
@@ -176,14 +177,17 @@ for t = 0:dt:3
         [~, f, ~] = predict_state(x_prev, u, M, dM_dtheta, nle, dnle_dtheta, dnle_dqdot, B,  dt);
         [z, ~] = predict_measurement(f, x_prev, g, h, L, R);
         
-        acc_noise_std = [0.039273; 0.043964; 0.048661];
+        acc_noise_std = [0.039273; 0.043964; 0.048661]*10;
         gyro_noise_std = [0.0017645; 0.0020313; 0.0023176];
+        mspeed_noise_std = [0.1*pi/180; 0.1*pi/180];
         % 입력에 노이즈 추가
         acc_noise = acc_noise_std .* randn(3,1);
         gyro_noise = gyro_noise_std .* randn(3,1);
+        mspeed_noise = mspeed_noise_std .* randn(2,1);
         
         z(1:3) = z(1:3) + acc_noise;
         z(4:6) = z(4:6) + gyro_noise;
+        z(7:8) = z(7:8) + mspeed_noise;
 
         
 
@@ -202,8 +206,8 @@ for t = 0:dt:3
         del_x_hat = x_hat - x_eq;
         
         % 정의된 범위
-        u_min = -0.5;
-        u_max = 0.5;
+        u_min = -1.128;
+        u_max = 1.128;
 
         % u 계산
         u = -K_d * (del_x_hat - del_x_d);
