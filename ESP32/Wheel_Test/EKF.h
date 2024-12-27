@@ -23,8 +23,8 @@ private:
 public:
   EKF(POL &Pol_)
     : Pol_ref(Pol_),
-      R_cov((Eigen::Matrix<float, 8, 1>() << 1.54239e-3f, 1.93287e-3f, 2.63191e-3f, 3.11351e-6f, 4.12642e-6f, 5.37135e-6f, 1e-5f, 1e-5f).finished().asDiagonal()),  // sensor noise covariance
-      Q_cov((Eigen::Matrix<float, 4, 1>() <<  4e-5f, 1e-4f, 4e-5f, 1e-4f).finished().asDiagonal())
+      R_cov((Eigen::Matrix<float, 8, 1>() << 1.54239e-3f, 1.93287e-3f, 2.63191e-3f, 3.11351e-6f, 4.12642e-6f, 5.37135e-6f, 3.046e-6f, 3.046e-6f).finished().asDiagonal()),  // sensor noise covariance
+      Q_cov((Eigen::Matrix<float, 4, 1>() <<  4e-5f, 1e-4f, 4e-5f, 1e-6f).finished().asDiagonal())
       // R_cov((Eigen::Matrix<float, 8, 1>() << 1.54239e-1f, 1.93287e-1f, 2.63191e-1f, 3.11351e-3f, 4.12642e-3f, 5.37135e-3f, 1e-5f, 1e-5f).finished().asDiagonal()),  // sensor noise covariance
       // Q_cov((Eigen::Matrix<float, 4, 1>() << 4e-5f, 1e-4f, 4e-5f, 1e-4f).finished().asDiagonal())
   {

@@ -7,6 +7,7 @@
 #include "POL.h"
 #include "EKF.h"
 #include "Logger.h"
+#include "Timer.h"
 
 
 // Properties와 Receiver, Controller 초기화
@@ -31,58 +32,112 @@ Eigen::Matrix<float, 8, 1> z = Eigen::Matrix<float, 8, 1>::Zero();
 Eigen::Matrix<float, 2, 1> iq_vec = Eigen::Matrix<float, 2, 1>::Zero();
 
 int i = 0;
-unsigned long previousMillis = 0;
-unsigned long time_ref = 0;
+Timer log_timer(Timer::TimerType::Millis);
+Timer sampling_timer(Timer::TimerType::Millis);
+Timer temp_timer(Timer::TimerType::Millis);
 float h_d = HEIGHT_MAX, phi_d = 0;
 float v_d = 0, dpsi_d = 0;
 
 void serialPrintStates();
 
+// ==============================================================================
+//                                    SETUP
+// ==============================================================================
 void setup() {
-  Serial.begin(115200);
-  receiver.begin();
-  HR_controller.attachServos(LH_PIN, RH_PIN);
+  // Serial 통신, Receiver, HR Controller 초기화
+  Serial.begin(SERIAL_BAUDRATE);               // Serial 통신 시작
+  receiver.begin();                            // Receiver 초기화
+  HR_controller.attachServos(LH_PIN, RH_PIN);  // Servo Pin 설정
 
+  // IMU (MPU6050) 초기화
   if (!MPU6050.begin()) {
     Serial.println("[ERROR] Fail to initialize IMU.");
   }
 
-  // RS485 핀 초기화
-  pinMode(RS485_DE_RE, OUTPUT);
-  digitalWrite(RS485_DE_RE, LOW);
-
-  // RS485 및 Serial 통신 초기화
-  RS485.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
+  // RS485 초기화
+  pinMode(RS485_DE_RE, OUTPUT);                                         // RS485 방향 제어 핀 설정
+  digitalWrite(RS485_DE_RE, LOW);                                       // RS485 수신 모드 설정
+  RS485.begin(RS485_BAUDRATE, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);  // RS485 통신 시작
 
   // WIFI 연결
   WIFI_Logger.begin();
 
-  unsigned long receiver_timer_start = millis();
-  const unsigned long timeout = 5000;  // 타임아웃 5초 설정
+  // PSRAM 상태 확인 및 초기화
+  if (psramFound()) {
+    Serial.println("PSRAM available.");
+    if (!psramInit()) {
+      Serial.println("PSRAM initialization failed!");
+      while (1) {}  // 초기화 실패 시 무한 루프
+    } else {
+      Serial.println("PSRAM initialized successfully!");
+    }
+    Serial.printf("PSRAM size: %d bytes\n", ESP.getPsramSize());  // PSRAM 크기 출력
+  } else {
+    Serial.println("PSRAM not available.");
+    while (1) {}  // PSRAM 미탐지 시 무한 루프
+  }
 
   // SBUS 데이터 수신 대기 (타임아웃 처리)
+  Timer receiver_timer(Timer::TimerType::Millis);
+  receiver_timer.start();
+  const unsigned long timeout = 5000;  // 타임아웃 5초 설정
+
   while (!receiver.readData()) {
-    if (millis() - receiver_timer_start > timeout) {
+    if (receiver_timer.getDuration() > timeout) {
       Serial.println("Timeout: No data received from SBUS.");
-      receiver_timer_start = millis();  // 타임아웃 초기화
+      receiver_timer.start();  // 타임아웃 초기화
     }
   }
-  receiver.updateData();
+  receiver.updateData();  // 데이터 업데이트
+
+  // Logger pre-allocation ==============================================
+  WIFI_Logger.readyToLogValue("cal_time");
+
+  WIFI_Logger.readyToLogTimeStamp();  // 시간 기록
+  // Desired states
+  WIFI_Logger.readyToLogValue("h_d");
+  WIFI_Logger.readyToLogValue("theta_eq");
+  WIFI_Logger.readyToLogValue("v_d");
+  WIFI_Logger.readyToLogValue("psi_dot_d");
+
+  // Estimated states
+  WIFI_Logger.readyToLogValue("theta_hat");
+  WIFI_Logger.readyToLogValue("theta_dot_hat");  // 시간 기록
+  WIFI_Logger.readyToLogValue("v_hat");          // 시간 기록
+  WIFI_Logger.readyToLogValue("psi_dot_hat");    // 시간 기록
+
+  // Control inputs
+  WIFI_Logger.readyToLogValue("tau_RW");  // 시간 기록
+  WIFI_Logger.readyToLogValue("tau_LW");  // 시간 기록
+
+  // Measurements
+  WIFI_Logger.readyToLogValue("acc_x");
+  WIFI_Logger.readyToLogValue("acc_y");  // 시간 기록
+  WIFI_Logger.readyToLogValue("acc_z");  // 시간 기록
+  WIFI_Logger.readyToLogValue("gyr_x");  // 시간 기록
+  WIFI_Logger.readyToLogValue("gyr_y");
+  WIFI_Logger.readyToLogValue("gyr_z");         // 시간 기록
+  WIFI_Logger.readyToLogValue("theta_dot_RW");  // 시간 기록
+  WIFI_Logger.readyToLogValue("theta_dot_LW");  // 시간 기록
+
+  WIFI_Logger.readyToLogValue("current_RW");
+  WIFI_Logger.readyToLogValue("current_LW");
+  // =======================================================================
 
   // 시간 측정 시작
-  time_ref = millis();
+  log_timer.start();
+  sampling_timer.start();
 }
 
 void loop() {
-  unsigned long currentMillis = millis();  // 현재 시간
-
   // sampling time이 경과했을 때만 실행
-  if (currentMillis - previousMillis >= dt * 1000) {
+  if (sampling_timer.getDuration() >= dt * 1000) {
     // 경과 시간 출력
     Serial.print("SamplingTime(ms):");
-    Serial.print(currentMillis - previousMillis);
+    Serial.print(sampling_timer.getDuration());
     Serial.print(" ");
-    previousMillis = currentMillis;  // 마지막 실행 시간을 현재 시간으로 업데이트
+
+    sampling_timer.start();  // sampling timer 초기화
 
 
     if (receiver.readData()) {
@@ -95,9 +150,10 @@ void loop() {
       // measurement update
       MPU6050.readData();
       MPU6050.getIMUMeasurement(z);
+
+      // TODO : motor speed가 k-1번째 값을 가져오기 때문에 수정 필요
       VYB_controller.getMotorSpeedMeasurement(z);
-      VYB_controller.getMotorCurrentMeasurement(iq_vec);
-      
+
       //// update Pol state and input for EKF ////
       Pol.setState(x);
       Pol.setInput(u);
@@ -126,7 +182,7 @@ void loop() {
       receiver.updateDesiredStates();
       h_d = receiver.getDesiredHeight();
       // phi_d = receiver.getDesiredRoll();
-      phi_d = 0;  // roll control diable
+      phi_d = 0;  // roll control disable
       v_d = receiver.getDesiredVel();
       dpsi_d = receiver.getDesiredYawVel();
       x_d.segment<2>(2) << v_d, dpsi_d;
@@ -143,43 +199,51 @@ void loop() {
       //// Send control command of HR controller and VYB controller
       HR_controller.controlHipServos(Pol.get_theta_hips());
       VYB_controller.sendControlCommand();
-      u = VYB_controller.getInputVector();     
+      u = VYB_controller.getInputVector();
 
-      ///// Logging ////////////////////////////////////////////////////////////////////////////////
-      WIFI_Logger.logTimeStamp(millis() - time_ref);  // 시간 기록
-      // state 기록
-      WIFI_Logger.logValue("h_d", h_d);
-      WIFI_Logger.logValue("theta_eq", x_d(0));
-      WIFI_Logger.logValue("v_d", x_d(2));
-      WIFI_Logger.logValue("psi_dot_d", x_d(3));
+      //============= Logging ======================================================================
+      // Logging calculating time and timestamp
+      WIFI_Logger.logValue("cal_time", sampling_timer.getDuration());  // Log the calculating time
+      WIFI_Logger.logTimeStamp(log_timer.getDuration());               // Log the current timestamp
 
-      WIFI_Logger.logValue("theta_hat", x(0));
-      WIFI_Logger.logValue("theta_dot_hat", x(1));  // 시간 기록
-      WIFI_Logger.logValue("v_hat", x(2));          // 시간 기록
-      WIFI_Logger.logValue("psi_dot_hat", x(3));    // 시간 기록
+      // Desired states (reference values for control)
+      WIFI_Logger.logValue("h_d", h_d);           // Desired height
+      WIFI_Logger.logValue("theta_d", x_d(0));    // Desired pitch angle (theta)
+      WIFI_Logger.logValue("v_d", x_d(2));        // Desired velocity
+      WIFI_Logger.logValue("psi_dot_d", x_d(3));  // Desired yaw rate (psi_dot)
 
-      WIFI_Logger.logValue("tau_RW", u(0));  // 시간 기록
-      WIFI_Logger.logValue("tau_LW", u(1));  // 시간 기록
+      // Estimated states (current system state estimates)
+      WIFI_Logger.logValue("theta_hat", x(0));      // Estimated pitch angle (theta)
+      WIFI_Logger.logValue("theta_dot_hat", x(1));  // Estimated pitch rate (theta_dot)
+      WIFI_Logger.logValue("v_hat", x(2));          // Estimated velocity
+      WIFI_Logger.logValue("psi_dot_hat", x(3));    // Estimated yaw rate (psi_dot)
 
-      WIFI_Logger.logValue("acc_x", z(0));
-      WIFI_Logger.logValue("acc_y", z(1));  // 시간 기록
-      WIFI_Logger.logValue("acc_z", z(2));  // 시간 기록
-      WIFI_Logger.logValue("gyr_x", z(3));  // 시간 기록
-      WIFI_Logger.logValue("gyr_y", z(4));
-      WIFI_Logger.logValue("gyr_z", z(5));         // 시간 기록
-      WIFI_Logger.logValue("theta_dot_RW", z(6));  // 시간 기록
-      WIFI_Logger.logValue("theta_dot_LW", z(7));  // 시간 기록
+      // Control inputs (commands to the system)
+      WIFI_Logger.logValue("tau_RW", u(0));  // Control torque for the right wheel (RW)
+      WIFI_Logger.logValue("tau_LW", u(1));  // Control torque for the left wheel (LW)
 
-      WIFI_Logger.logValue("current_RW", iq_vec(0));
-      WIFI_Logger.logValue("current_LW", iq_vec(1));
-      ///////////////////////////////////////////////////////////////////////////////////////////////
+      // Measurements (sensor readings)
+      WIFI_Logger.logValue("acc_x", z(0));         // Acceleration in x-direction
+      WIFI_Logger.logValue("acc_y", z(1));         // Acceleration in y-direction
+      WIFI_Logger.logValue("acc_z", z(2));         // Acceleration in z-direction
+      WIFI_Logger.logValue("gyr_x", z(3));         // Gyroscope reading in x-direction
+      WIFI_Logger.logValue("gyr_y", z(4));         // Gyroscope reading in y-direction
+      WIFI_Logger.logValue("gyr_z", z(5));         // Gyroscope reading in z-direction
+      WIFI_Logger.logValue("theta_dot_RW", z(6));  // Angular velocity of the right wheel
+      WIFI_Logger.logValue("theta_dot_LW", z(7));  // Angular velocity of the left wheel
+
+      // Current measurements for the wheels
+      WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
+      WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
+      //=============================================================================================
     } else if (receiver.isReset()) {
       // Estimator Reset
       x.setZero();
       u.setZero();
       Estimator.reset_estimator();
       WIFI_Logger.resetLogData();
-      time_ref = millis();
+      log_timer.start();
+
     } else {
       // Off Mode
       ServoLW.sendTorqueControlCommand(0);
@@ -219,74 +283,65 @@ void loop() {
         }
       }
 
-      ///// Logging /////
-      // WIFI_Logger.logTimeStamp(millis() - time_ref); // 시간 기록
+      //============= Logging ======================================================================
+      // // Logging calculating time and timestamp
+      // WIFI_Logger.logValue("cal_time", sampling_timer.getDuration());  // Log the calculating time
+      // WIFI_Logger.logTimeStamp(log_timer.getDuration());               // Log the current timestamp
 
-      // WIFI_Logger.logValue("h_d", h_d);
-      // WIFI_Logger.logValue("theta_eq", x_d(0));
-      // WIFI_Logger.logValue("v_d", x_d(2));
-      // WIFI_Logger.logValue("psi_dot_d", x_d(3));
+      // // Desired states (reference values for control)
+      // WIFI_Logger.logValue("h_d", h_d);           // Desired height
+      // WIFI_Logger.logValue("theta_d", x_d(0));    // Desired pitch angle (theta)
+      // WIFI_Logger.logValue("v_d", x_d(2));        // Desired velocity
+      // WIFI_Logger.logValue("psi_dot_d", x_d(3));  // Desired yaw rate (psi_dot)
 
-      // WIFI_Logger.logValue("theta_hat", x(0));
-      // WIFI_Logger.logValue("theta_dot_hat", x(1));
-      // WIFI_Logger.logValue("v_hat", x(2));
-      // WIFI_Logger.logValue("psi_dot_hat", x(3));
+      // // Estimated states (current system state estimates)
+      // WIFI_Logger.logValue("theta_hat", x(0));      // Estimated pitch angle (theta)
+      // WIFI_Logger.logValue("theta_dot_hat", x(1));  // Estimated pitch rate (theta_dot)
+      // WIFI_Logger.logValue("v_hat", x(2));          // Estimated velocity
+      // WIFI_Logger.logValue("psi_dot_hat", x(3));    // Estimated yaw rate (psi_dot)
 
-      // WIFI_Logger.logValue("tau_RW", u(0));
-      // WIFI_Logger.logValue("tau_LW", u(1));
+      // // Control inputs (commands to the system)
+      // WIFI_Logger.logValue("tau_RW", u(0));  // Control torque for the right wheel (RW)
+      // WIFI_Logger.logValue("tau_LW", u(1));  // Control torque for the left wheel (LW)
 
-      // WIFI_Logger.logValue("acc_x", z(0));
-      // WIFI_Logger.logValue("acc_y", z(1));
-      // WIFI_Logger.logValue("acc_z", z(2));
-      // WIFI_Logger.logValue("gyr_x", z(3));
-      // WIFI_Logger.logValue("gyr_y", z(4));
-      // WIFI_Logger.logValue("gyr_z", z(5));
-      // WIFI_Logger.logValue("theta_dot_RW", z(6));
-      // WIFI_Logger.logValue("theta_dot_LW", z(7));
-      ////////////////////
-      //  Estimator.printAllEstimationData();
+      // // Measurements (sensor readings)
+      // WIFI_Logger.logValue("acc_x", z(0));         // Acceleration in x-direction
+      // WIFI_Logger.logValue("acc_y", z(1));         // Acceleration in y-direction
+      // WIFI_Logger.logValue("acc_z", z(2));         // Acceleration in z-direction
+      // WIFI_Logger.logValue("gyr_x", z(3));         // Gyroscope reading in x-direction
+      // WIFI_Logger.logValue("gyr_y", z(4));         // Gyroscope reading in y-direction
+      // WIFI_Logger.logValue("gyr_z", z(5));         // Gyroscope reading in z-direction
+      // WIFI_Logger.logValue("theta_dot_RW", z(6));  // Angular velocity of the right wheel
+      // WIFI_Logger.logValue("theta_dot_LW", z(7));  // Angular velocity of the left wheel
+
+      // // Current measurements for the wheels
+      // WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
+      // WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
+      //=============================================================================================
+
       serialPrintStates();
       Serial.println(" Off Mode");
     }
   }
 }
 
-
-  void serialPrintStates() {
-    Serial.print("theta:");
-    Serial.print(x(0) * 180 / M_PI, 6);
-    Serial.print(" ");
-    Serial.print("theta_dot:");
-    Serial.print(x(1) * 180 / M_PI, 6);
-    Serial.print(" ");
-    Serial.print("v:");
-    Serial.print(x(2), 6);
-    Serial.print(" ");
-    Serial.print("psi_dot:");
-    Serial.print(x(3) * 180 / M_PI, 6);
-    Serial.print(" ");
-    Serial.print("u_RW:");
-    Serial.print(u(0), 6);
-    Serial.print(" ");
-    Serial.print("u_LW:");
-    Serial.print(u(1), 6);
-    Serial.print(" ");
-    Serial.print("acc_x:");
-    Serial.print(z(0), 6);
-    Serial.print(" ");
-    Serial.print("acc_y:");
-    Serial.print(z(1), 6);
-    Serial.print(" ");
-    Serial.print("acc_z:");
-    Serial.print(z(2), 6);
-    Serial.print(" ");
-    Serial.print("gyro_x:");
-    Serial.print(z(3), 6);
-    Serial.print(" ");
-    Serial.print("gyro_y:");
-    Serial.print(z(4), 6);
-    Serial.print(" ");
-    Serial.print("gyro_z:");
-    Serial.print(z(5), 6);
-    Serial.print(" ");    
-  }
+void serialPrintStates() {
+  Serial.print("theta:");
+  Serial.print(x(0) * 180 / M_PI, 6);
+  Serial.print(" ");
+  Serial.print("theta_dot:");
+  Serial.print(x(1) * 180 / M_PI, 6);
+  Serial.print(" ");
+  Serial.print("v:");
+  Serial.print(x(2), 6);
+  Serial.print(" ");
+  Serial.print("psi_dot:");
+  Serial.print(x(3) * 180 / M_PI, 6);
+  Serial.print(" ");
+  Serial.print("u_RW:");
+  Serial.print(u(0), 6);
+  Serial.print(" ");
+  Serial.print("u_LW:");
+  Serial.print(u(1), 6);
+  Serial.print(" ");
+}

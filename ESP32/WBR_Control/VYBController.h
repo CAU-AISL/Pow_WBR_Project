@@ -34,7 +34,7 @@ public:
     : ServoRW(ServoRW_), ServoLW(ServoLW_) {
     // 전류 및 토크 상수 초기화
     iq_factor = 0.01611328f;  // (A/LSB) 33 / 2048
-    torque_constant = 0.7f;   // (Nm/A) * reduction ratio
+    torque_constant = 0.07f;   // (Nm/A) * reduction ratio
     saturation = iq_factor * torque_constant * MAX_TORQUE_COMMAND;
 
 
