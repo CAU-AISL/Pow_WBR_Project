@@ -27,14 +27,27 @@ public:
   bool begin() {
     Wire.begin(SDA_PIN, SCL_PIN, 400000);  // SDA, SCL 핀과 클록 속도 설정
     Wire.beginTransmission(0x68);          // I2C 주소
-    Wire.write(0x6B);                      // PWR_MGMT_1 레지스터
-    Wire.write(0);                         // 슬립 모드 비활성화
+
+    // 1. 슬립 모드 비활성화 (PWR_MGMT_1 레지스터)
+    Wire.write(0x6B);  // PWR_MGMT_1 레지스터
+    Wire.write(0);     // 슬립 모드 비활성화
     if (Wire.endTransmission(true) != 0) {
       Serial.println("[Error] Failed to initialize MPU6050. Check connections!");
       return false;
     }
+
+    // 2. DLPF 설정 (CONFIG 레지스터)
+    Wire.beginTransmission(0x68);  // I2C 주소
+    Wire.write(0x1A);              // CONFIG 레지스터
+    Wire.write(0x02);              // DLPF 94Hz 설정
+    if (Wire.endTransmission(true) != 0) {
+      Serial.println("[Error] Failed to set DLPF. Check connections!");
+      return false;
+    }
+
     return true;
   }
+
 
   void setZero() {
     acc_raw_vec.setZero();
