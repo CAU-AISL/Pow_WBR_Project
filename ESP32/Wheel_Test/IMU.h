@@ -14,12 +14,8 @@ public:
   float temperature;  // 온도 (섭씨)
 
   // 캘리브레이션 값
-  // Eigen::Vector3f gyro_bias{ -8.38f * M_PI / 180, 0.05f * M_PI / 180, 0.68f * M_PI / 180 };  // (rad/s)
-  // Eigen::Vector3f accel_bias{ 0.07f * 9.80665f, -0.02f * 9.80665f, -0.1f * 9.80665f };       // (m/s^2)
-  Eigen::Vector3f gyro_bias{ -0.15315f, -0.00129f, -0.00132f };    // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.583683f, -0.22948f, -1.137587f };  // (m/s^2)
-
-
+  Eigen::Vector3f gyro_bias{ -0.118868900f, -0.0329653600f, 0.0327140395f };    // (rad/s)
+  Eigen::Vector3f accel_bias{ 0.6031676618f, -0.3592370879f, -0.9186593854f };  // (m/s^2)
 
   // 생성자
   IMU() {}
@@ -40,6 +36,7 @@ public:
     Wire.beginTransmission(0x68);  // I2C 주소
     Wire.write(0x1A);              // CONFIG 레지스터
     Wire.write(0x02);              // DLPF 94Hz 설정
+    // Wire.write(0x05);              // DLPF 10Hz 설정
     if (Wire.endTransmission(true) != 0) {
       Serial.println("[Error] Failed to set DLPF. Check connections!");
       return false;
@@ -143,25 +140,25 @@ public:
   // 데이터를 Serial Plotter에 출력하는 함수
   void printData() {
     Serial.print("Accel_X:");
-    Serial.print(acc_vec(0), 2);
+    Serial.print(acc_vec(0), 5);
     Serial.print(" ");
     Serial.print("Accel_Y:");
-    Serial.print(acc_vec(1), 2);
+    Serial.print(acc_vec(1), 5);
     Serial.print(" ");
     Serial.print("Accel_Z:");
-    Serial.print(acc_vec(2), 2);
+    Serial.print(acc_vec(2), 5);
     Serial.print(" ");
     Serial.print("Gyro_X:");
-    Serial.print(gyr_vec(0), 2);
+    Serial.print(gyr_vec(0), 5);
     Serial.print(" ");
     Serial.print("Gyro_Y:");
-    Serial.print(gyr_vec(1), 2);
+    Serial.print(gyr_vec(1), 5);
     Serial.print(" ");
     Serial.print("Gyro_Z:");
-    Serial.print(gyr_vec(2), 2);
+    Serial.print(gyr_vec(2), 5);
     Serial.print(" ");
     Serial.print("Temperature:");
-    Serial.print(temperature, 2);  // 줄바꿈
+    Serial.print(temperature, 5);  // 줄바꿈
   }
 };
 

@@ -120,7 +120,7 @@ public:
   * @brief 모터 Current 측정값 update
   * @param iq_vec 모터 current 측정값을 저장할 벡터
   */
-  void getMotorCurrentMeasurement(Eigen::Matrix<float, 2, 1>& iq_vec){
+  void getMotorCurrentMeasurement(Eigen::Matrix<float, 2, 1>& iq_vec) {
     iq_vec << ServoRW.getMotorIq(), ServoLW.getMotorIq();
   }
 
@@ -128,7 +128,7 @@ public:
   * @brief 모터 Current raw 측정값 update
   * @param iq_raw_vec 모터 current 측정값을 저장할 벡터
   */
-  void getMotorCurrentMeasurement(Eigen::Matrix<int16_t, 2, 1>& iq_raw_vec){
+  void getMotorCurrentMeasurement(Eigen::Matrix<int16_t, 2, 1>& iq_raw_vec) {
     iq_raw_vec << ServoRW.getMotorIqRaw(), ServoLW.getMotorIqRaw();
   }
 
@@ -174,8 +174,8 @@ public:
   }
 
   /**
-   * @brief 계산된 제어 명령을 서보에 전송
-   */
+ * @brief 계산된 제어 명령을 서보에 전송
+ */
   void sendControlCommand() {
     float u_RW = u(0) / (iq_factor * torque_constant);
     float u_LW = u(1) / (iq_factor * torque_constant);
@@ -191,6 +191,10 @@ public:
     ServoLW.sendTorqueControlCommand(static_cast<int16_t>(u_LW));
   }
 
+  /**
+ * @brief 직접 제어 명령을 서보에 전송
+ * @param iq_inputs 두 개의 바퀴에 대한 제어 신호 (Right Wheel, Left Wheel)
+ */
   void sendDirectControlCommand(Eigen::Matrix<int16_t, 2, 1> iq_inputs) {
     int16_t u_RW = iq_inputs(0);
     int16_t u_LW = iq_inputs(1);

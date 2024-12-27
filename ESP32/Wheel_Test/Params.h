@@ -43,7 +43,7 @@ const char* ssid = "OSB";       // 핫스팟 이름
 const char* password = "12345678";  // 핫스팟 비밀번호
 
 
-const float dt = 0.012;  // sampling time
+const float dt = 0.003;  // sampling time
 
 // mm -> m 단위 변환 함수 (벡터)
 template<typename T>

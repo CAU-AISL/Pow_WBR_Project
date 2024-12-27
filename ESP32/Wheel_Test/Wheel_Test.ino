@@ -37,7 +37,7 @@ std::vector<int16_t> command_vec;  // torque command vector (LSD)
 int16_t command_max = 2000;
 int16_t command_increment = 10;  // LSD
 int command_idx = 0;
-int dt_command = 120;  // milli sec
+int dt_command = 42;  // milli sec
 
 void serialPrintStates();
 
@@ -69,7 +69,6 @@ void setup() {
   // ================================
   pinMode(RS485_DE_RE, OUTPUT);    // RS485 방향 제어 핀 설정
   digitalWrite(RS485_DE_RE, LOW);  // RS485 수신 모드 설정
-  // RS485.begin(115200, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);  // RS485 통신 시작
   RS485.begin(460800, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);  // RS485 통신 시작
 
   // ================================
@@ -127,7 +126,7 @@ void setup() {
   WIFI_Logger.readyToLogValue("theta_dot_LW");  // rad/s
   WIFI_Logger.readyToLogValue("iq_RW");         // (LSD)
   WIFI_Logger.readyToLogValue("iq_LW");         // (LSD)
-  WIFI_Logger.readyToLogValue("log_time");      // (us)
+  // WIFI_Logger.readyToLogValue("log_time");      // (us)
 
 
   // ================================
@@ -157,7 +156,8 @@ void loop() {
       // Running Mode
       if (i >= dt_command / (dt * 1000)) {
         if (command_idx < command_vec.size()) {
-          iq_inputs << command_vec.at(command_idx), -command_vec.at(command_idx);
+          iq_inputs << command_vec.at(command_idx), command_vec.at(command_idx);
+          // iq_inputs << 0, 0;
           command_idx++;
           i = 0;
         } else {
@@ -171,36 +171,36 @@ void loop() {
 
 
       Pol.setHR(h_d, phi_d);
-      temp_timer.start();
+      // temp_timer.start();
       Pol.solve_inverse_kinematics();
-      Serial.print("inverse_kinematics_time(us):");
-      Serial.print(temp_timer.getDuration());
-      Serial.print(" ");
+      // Serial.print("inverse_kinematics_time(us):");
+      // Serial.print(temp_timer.getDuration());
+      // Serial.print(" ");
 
-      temp_timer.start();
+      // temp_timer.start();
       // HR_controller.controlHipServos(Pol.get_theta_hips());
       VYB_controller.sendDirectControlCommand(iq_inputs);
-      Serial.print("send_command_time(us):");
-      Serial.print(temp_timer.getDuration());
-      Serial.print(" ");
+      // Serial.print("send_command_time(us):");
+      // Serial.print(temp_timer.getDuration());
+      // Serial.print(" ");
 
-      temp_timer.start();
+      // temp_timer.start();
       // measurement update
       MPU6050.readData();
       MPU6050.getIMUMeasurement(z);
       VYB_controller.getMotorSpeedMeasurement(z);
       VYB_controller.getMotorCurrentMeasurement(iq_outputs);
-      Serial.print("measurement_update_time(us):");
-      Serial.print(temp_timer.getDuration());
-      Serial.print(" ");
+      // Serial.print("measurement_update_time(us):");
+      // Serial.print(temp_timer.getDuration());
+      // Serial.print(" ");
 
-      // serialPrintStates();
+      // MPU6050.printData();
       Serial.println(" Run Mode");
 
       ///// Logging /////
       WIFI_Logger.logValue("cal_time", sampling_timer.getDuration());
 
-      temp_timer.start();
+      // temp_timer.start();
       WIFI_Logger.logTimeStamp(log_timer.getDuration());  // 시간 기록
       // state 기록
       WIFI_Logger.logValue("h_d", h_d);  // (m)
@@ -218,7 +218,7 @@ void loop() {
       WIFI_Logger.logValue("theta_dot_LW", z(7));                  // rad/s
       WIFI_Logger.logValue("iq_RW", iq_outputs(0));                // (LSD)
       WIFI_Logger.logValue("iq_LW", iq_outputs(1));                // (LSD)
-      WIFI_Logger.logValue("log_time", temp_timer.getDuration());  // (us)
+      // WIFI_Logger.logValue("log_time", temp_timer.getDuration());  // (us)
       ////////////////////
 
       i++;

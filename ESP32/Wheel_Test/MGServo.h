@@ -71,10 +71,6 @@ public:
   bool sendTorqueControlCommand(int16_t iqControl) {
     const size_t commandLength = FRAME_COMMAND_LENGTH + TORQUE_CONTROL_LENGTH + 1;      // frame + data + data_checksum
     const size_t responseLength = FRAME_COMMAND_LENGTH + READ_MOTOR_STATE2_LENGTH + 1;  // frame + data + data_checksum
-    // Serial.print("Command: ");
-    // Serial.print(iqControl);
-    // Serial.println();
-
 
     uint8_t command[commandLength];
     uint8_t response[responseLength];
@@ -199,9 +195,9 @@ private:
   bool readResponse(uint8_t* response, const size_t responseLength) {
     toggleRS485Mode(LOW);
 
-    unsigned long startTime = millis();  // 타이머 시작
+    unsigned long startTime = micros();  // 타이머 시작
     while (RS485.available() < responseLength) {
-      if (millis() - startTime > 2) {
+      if (micros() - startTime > 500) {
             Serial.println("[ERROR] Response timeout! No sufficient data received.");
             return false;  // 타임아웃 발생
         }
