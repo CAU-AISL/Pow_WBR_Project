@@ -125,6 +125,14 @@ public:
   }
 
   /**
+  * @brief 모터 Current raw 측정값 update
+  * @param iq_raw_vec 모터 current 측정값을 저장할 벡터
+  */
+  void getMotorCurrentMeasurement(Eigen::Matrix<int16_t, 2, 1>& iq_raw_vec){
+    iq_raw_vec << ServoRW.getMotorIqRaw(), ServoLW.getMotorIqRaw();
+  }
+
+  /**
    * @brief 현재 높이에 따라 LQR 게인 K를 계산
    * @param h 현재 높이 (m)
    */
@@ -183,19 +191,12 @@ public:
     ServoLW.sendTorqueControlCommand(static_cast<int16_t>(u_LW));
   }
 
-  void sendDirectControlCommand(Eigen::Matrix<float, 2, 1> u_) {
-    float u_RW = u_(0) / (iq_factor * torque_constant);
-    float u_LW = u_(1) / (iq_factor * torque_constant);
+  void sendDirectControlCommand(Eigen::Matrix<int16_t, 2, 1> iq_inputs) {
+    int16_t u_RW = iq_inputs(0);
+    int16_t u_LW = iq_inputs(1);
 
-    // Right Wheel motor의 마찰로 인해 발생하는 torque 문제를 조정해줌
-    if (u_RW < 0) {
-      u_RW -= RW_bias;
-    } else if (u_RW > 0) {
-      u_RW += RW_bias;
-    }
-
-    ServoRW.sendTorqueControlCommand(static_cast<int16_t>(u_RW));
-    ServoLW.sendTorqueControlCommand(static_cast<int16_t>(u_LW));
+    ServoRW.sendTorqueControlCommand(u_RW);
+    ServoLW.sendTorqueControlCommand(u_LW);
   }
 };
 

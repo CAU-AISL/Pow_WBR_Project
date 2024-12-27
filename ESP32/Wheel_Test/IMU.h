@@ -16,8 +16,8 @@ public:
   // 캘리브레이션 값
   // Eigen::Vector3f gyro_bias{ -8.38f * M_PI / 180, 0.05f * M_PI / 180, 0.68f * M_PI / 180 };  // (rad/s)
   // Eigen::Vector3f accel_bias{ 0.07f * 9.80665f, -0.02f * 9.80665f, -0.1f * 9.80665f };       // (m/s^2)
-  Eigen::Vector3f gyro_bias{ -0.15315f, -0.00129f, -0.00132f};  // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.583683f, -0.22948f, -1.137587f };       // (m/s^2)
+  Eigen::Vector3f gyro_bias{ -0.15315f, -0.00129f, -0.00132f };    // (rad/s)
+  Eigen::Vector3f accel_bias{ 0.583683f, -0.22948f, -1.137587f };  // (m/s^2)
 
 
 
@@ -25,7 +25,7 @@ public:
   IMU() {}
 
   bool begin() {
-    Wire.begin(SDA_PIN, SCL_PIN, 100000);  // SDA, SCL 핀과 클록 속도 설정
+    Wire.begin(SDA_PIN, SCL_PIN, 400000);  // SDA, SCL 핀과 클록 속도 설정
     Wire.beginTransmission(0x68);          // I2C 주소
     Wire.write(0x6B);                      // PWR_MGMT_1 레지스터
     Wire.write(0);                         // 슬립 모드 비활성화
@@ -51,26 +51,35 @@ public:
     z.segment<3>(3) = gyr_vec;
   }
 
-  // 센서 데이터를 읽기
   bool readData() {
     Wire.beginTransmission(0x68);  // I2C 주소
     Wire.write(0x3B);              // 시작 레지스터 (ACCEL_XOUT_H)
     if (Wire.endTransmission(false) != 0) {
-      return false;  // 데이터 요청 실패 시 함수 종료
+      return false;  // 데이터 요청 실패
     }
 
-    if (Wire.requestFrom(0x68, 14, true) != 14) {
-      return false;  // 데이터 수신 실패 시 함수 종료
+    // 14바이트 요청
+    Wire.requestFrom(0x68, 14, true);
+    if (Wire.available() < 14) {
+      return false;  // 데이터 수신 실패
     }
 
-    // 데이터 읽기
-    acc_raw_vec << (Wire.read() << 8 | Wire.read()),
-      (Wire.read() << 8 | Wire.read()),
-      (Wire.read() << 8 | Wire.read());
-    Tmp = Wire.read() << 8 | Wire.read();  // 온도 데이터
-    gyr_raw_vec << (Wire.read() << 8 | Wire.read()),
-      (Wire.read() << 8 | Wire.read()),
-      (Wire.read() << 8 | Wire.read());
+    // 데이터 읽기 및 처리
+    uint8_t buffer[14];
+    for (int i = 0; i < 14; i++) {
+      buffer[i] = Wire.read();
+    }
+
+    // 가속도 데이터
+    acc_raw_vec << (buffer[0] << 8 | buffer[1]),
+      (buffer[2] << 8 | buffer[3]),
+      (buffer[4] << 8 | buffer[5]);
+    // 온도 데이터
+    Tmp = buffer[6] << 8 | buffer[7];
+    // 자이로 데이터
+    gyr_raw_vec << (buffer[8] << 8 | buffer[9]),
+      (buffer[10] << 8 | buffer[11]),
+      (buffer[12] << 8 | buffer[13]);
 
     // 단위 변환 및 보정
     acc_vec = (acc_raw_vec.cast<float>() / 16384.0f) * 9.80665f - accel_bias;
@@ -80,8 +89,10 @@ public:
 
     // 온도 변환
     temperature = Tmp / 340.0f + 36.53f;
+
     return true;
   }
+
 
   // 필터 적용 함수
   void applyFilters() {

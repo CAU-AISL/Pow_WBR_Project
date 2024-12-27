@@ -23,11 +23,11 @@ private:
 
   uint8_t motorID;
   int8_t temperature;  // temperature (℃)
-  uint16_t encoder;    
-  int16_t iq_raw;      // raw current (LSD)
-  int16_t speed_raw;   // speed raw (LSD)
-  float iq;            // current (A)
-  float speed;         // speed (deg/s)
+  uint16_t encoder;
+  int16_t iq_raw;     // raw current (LSD)
+  int16_t speed_raw;  // speed raw (LSD)
+  float iq;           // current (A)
+  float speed;        // speed (deg/s)
 
 
 public:
@@ -52,6 +52,10 @@ public:
 
   uint16_t getMotorEncoder() const {
     return encoder;
+  }
+
+  int16_t getMotorIqRaw() const {
+    return iq_raw;
   }
 
   float getMotorIq() const {
@@ -174,14 +178,34 @@ private:
 
   // 명령 전송
   void sendCommand(const uint8_t* command, const size_t commandLength) {
+    // 송수신 버퍼 초기화
+    while (RS485.available()) {
+      RS485.read();  // 버퍼 비우기
+    }
+
+    // RS485 송신 모드로 전환
     toggleRS485Mode(HIGH);
+
+    // 명령 전송
     RS485.write(command, commandLength);
-    RS485.flush();
+    RS485.flush();  // 전송 완료 대기
+
+    // RS485 수신 모드로 복귀
+    toggleRS485Mode(LOW);
   }
+
 
   // 응답 읽기
   bool readResponse(uint8_t* response, const size_t responseLength) {
     toggleRS485Mode(LOW);
+
+    unsigned long startTime = millis();  // 타이머 시작
+    while (RS485.available() < responseLength) {
+      if (millis() - startTime > 2) {
+            Serial.println("[ERROR] Response timeout! No sufficient data received.");
+            return false;  // 타임아웃 발생
+        }
+    }
     size_t bytesRead = RS485.readBytes(response, responseLength);
 
     if (bytesRead != responseLength) {
