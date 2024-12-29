@@ -1,27 +1,33 @@
-clc; clear; close all;
+clc; clear;
 format long;
 
 % CSV 파일 읽기
+% filename = '20241229_logdata_wheelmotor_torquetest_3ms_Kp200_Ki255.csv'; % CSV 파일 이름
 filename = '20241227_logdata_wheelmotor_torquetest_3ms.csv'; % CSV 파일 이름
+
 data = readtable(filename);
 
+% time_cut_idx = 5588;
+% time_cut_idx = 2700;
+time_cut_idx = 300;
+
 % extract data 
-timeStamp = data.TimeStamp(1:5588);
-acc_x_imu = data.acc_x(1:5588); % m/s^2
-acc_y_imu = data.acc_y(1:5588); % m/s^2
-acc_z_imu = data.acc_z(1:5588); % m/s^2
-gyr_x_imu = data.gyr_x(1:5588); % rad/s
-gyr_y_imu = data.gyr_y(1:5588); % rad/s
-gyr_z_imu = data.gyr_z(1:5588); % rad/s
+timeStamp = data.TimeStamp(1:time_cut_idx);
+acc_x_imu = data.acc_x(1:time_cut_idx); % m/s^2
+acc_y_imu = data.acc_y(1:time_cut_idx); % m/s^2
+acc_z_imu = data.acc_z(1:time_cut_idx); % m/s^2
+gyr_x_imu = data.gyr_x(1:time_cut_idx); % rad/s
+gyr_y_imu = data.gyr_y(1:time_cut_idx); % rad/s
+gyr_z_imu = data.gyr_z(1:time_cut_idx); % rad/s
 
-iq_LW_output = data.iq_LW(1:5588); % (LSD)
-iq_RW_output = data.iq_RW(1:5588); % (LSD)
+iq_LW_output = data.iq_LW(1:time_cut_idx); % (LSD)
+iq_RW_output = data.iq_RW(1:time_cut_idx); % (LSD)
 
-iq_LW_input = data.tau_LW(1:5588);  % (LSD)
-iq_RW_input = data.tau_RW(1:5588);  % (LSD)
+iq_LW_input = data.tau_LW(1:time_cut_idx);  % (LSD)
+iq_RW_input = data.tau_RW(1:time_cut_idx);  % (LSD)
 
-theta_dot_LW = data.theta_dot_LW(1:5588); % rad/s
-theta_dot_RW = data.theta_dot_RW(1:5588); % rad/s
+theta_dot_LW = data.theta_dot_LW(1:time_cut_idx); % rad/s
+theta_dot_RW = data.theta_dot_RW(1:time_cut_idx); % rad/s
 
 % 변환 상수
 iq_to_actual = 3.3 / 2048;       % Iq 변환 계수 (raw to actual current)

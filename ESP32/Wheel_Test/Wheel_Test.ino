@@ -34,7 +34,7 @@ Timer temp_timer(Timer::TimerType::Micros);
 float h_d = HEIGHT_MAX, phi_d = 0;
 
 std::vector<int16_t> command_vec;  // torque command vector (LSD)
-int16_t command_max = 2000;
+int16_t command_max = 1000;
 int16_t command_increment = 10;  // LSD
 int command_idx = 0;
 int dt_command = 42;  // milli sec
