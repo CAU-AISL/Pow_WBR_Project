@@ -64,12 +64,6 @@ public:
     }
   }
 
-  // Reset the filter state and measurements
-  void reset_filter() {
-    x_compen.setZero(); // Reset state vector
-    z.setZero();        // Reset measurement vector
-  }
-
   // Estimate the state vector based on the current measurement
   bool estimate_state(Eigen::Matrix<float, 4, 1> &x_, const Eigen::Matrix<float, 8, 1> &z_) {
     setMeasurement(z_); // Update measurement vector
