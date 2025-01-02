@@ -189,9 +189,7 @@ inline Properties createDefaultProperties() {
   props.I_RW = gmm2ToKgm2Matrix((Eigen::Matrix<float, 3, 3>() << 334104.60295742f, -0.00692262f, -0.00045120f,
                                  -0.00692262f, 640742.79507983f, 0.00005987f,
                                  -0.00045120f, 0.00005987f, 334104.65585037f)
-                                  .finished());
-
-
+                                  .finished());                                
   return props;
 }
 
