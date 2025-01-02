@@ -5,148 +5,81 @@ load('dynamic_properties.mat');
 load('dynamics_functions.mat');
 properties.IG_matrices();
 
-h = 0.07; % (m)
-phi = 0;
-
-[mass_total, r_total, I_total] = calculate_body_total_property(h, phi, properties);
-m_B = mass_total;
-p_bcom = r_total;
-I_B_B = I_total;
-
-L = properties.L;
-R = properties.R;
-
-m_RW = properties.m_RW;
-m_LW = properties.m_LW;
-I_B_RW = properties.I_B_RW;
-I_B_LW = properties.I_B_LW;
-
-g = properties.g;
-
-
-theta_eq = atan(-r_total(1) / (h + r_total(3)))
-% disp('theta_eq(deg) : ');
-% disp(theta_eq * 180 / pi);
-
-B = B_f(L, R);
-
-M = M_f(I_B_B(1,1),I_B_B(2,1),I_B_B(2,2),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-    I_B_LW(2,1),I_B_LW(2,2),I_B_RW(2,1),I_B_RW(2,2),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-    I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,h,m_B,m_LW,m_RW,p_bcom(1),p_bcom(2),p_bcom(3),theta_eq);
-
-nle = nle_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-    I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3), I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3), ...
-    L,R,g,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3), 0,theta_eq,0,0);
-
-% disp('Minv_B : ');
-% disp('tau_RW                tau_LW');
-% disp(M\B);
-% disp('-Minv_nle : ');
-% disp(-M\nle);
-
-epsilon = 1e-9;
-
-dM_dtheta = dM_dtheta_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-    I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-    I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3),theta_eq);
-
-dnle_dtheta = dnle_dtheta_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-    I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-    I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,g,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3), ...
-    0,theta_eq,0,0);
-
-dnle_dqdot = dnle_dqdot_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-    I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-    I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3), ...
-    0,theta_eq,0,0);
-
-A_ = calculate_fx(M, dM_dtheta, nle, dnle_dtheta, dnle_dqdot);
-
-B_ = calculate_fu(M, B);
-
-[~, C_] = predict_measurement([0; 0; 0; 0], [theta_eq; 0; 0; 0], g, h, L, R);
-
-% 컨트롤 가능성 행렬 계산
-C = ctrb(A_, B_);  % ctrb 함수는 MATLAB 내장 함수로, 컨트롤 가능성 행렬을 계산
-
-% 랭크 확인
-rank_C = rank(C);  % 컨트롤 가능성 행렬의 랭크를 계산
-
-
-% 샘플링 시간 (T)
 Ts = 0.01;
 dt = 0.0001; % simulation dt
 
+h = 0.07; % (m)
+phi = 0;
+
+% LQR Weights
+Q_ = diag([10 10 5000 100]);  % 상태 가중치
+R_ = diag([1e4 1e4]);            % 입력 가중치
+
+
+
+model = Pol(properties, dynamic_functions);
+model.setState(zeros(4,1), zeros(2,1),h);
+
+theta_eq = model.get_theta_eq(h, phi);
+
+x_eq = [theta_eq; 0; 0; 0];
+u_eq = zeros(2,1);
+
+model.setState(x_eq, u_eq, h);
+model.calculateDynamics();
+model.calculateJacobian();
+
+B = model.B;
+M = model.M;
+nle = model.nle;
+dM_dtheta = model.dM_dtheta;
+dnle_dtheta = model.dnle_dtheta;
+dnle_dqdot = model.dnle_dqdot;
+
+A_ = calculate_fx(M, dM_dtheta, nle, dnle_dtheta, dnle_dqdot);
+B_ = calculate_fu(M, B);
+
+% 컨트롤 가능성 행렬 계산
+C = ctrb(A_, B_);  % ctrb 함수는 MATLAB 내장 함수로, 컨트롤 가능성 행렬을 계산
+if rank(C) == length(A_)  % A_의 크기에 따라 시스템의 상태 차원을 확인
+    disp('System is controllable.'); 
+else
+    disp('System is NOT controllable.');
+end
+
 % 이산 시스템 변환
-sys_c = ss(A_, B_, eye(4, 4), []);        % 연속 시스템 생성 (C, D 없음)
+sys_c = ss(A_, B_, eye(4, 4), []);        % 연속 시스템 생성
 sys_d = c2d(sys_c, Ts, 'zoh');    % ZOH 방식으로 이산화
 Ad = sys_d.A;                    % 이산화된 A 행렬
 Bd = sys_d.B;                    % 이산화된 B 행렬
 
-% 상태 가중치(Q)와 입력 가중치(R) 정의
-% Q_ = diag([1 1 1 1]);  % 상태 가중치
-% R_ = diag([1 1]);            % 입력 가중치
+% Discrete LQR Gain 계산
+[K_d, S_d, P_d] = dlqr(Ad, Bd, Q_, R_);
 
-% Q_ = diag([10 10 5000 100]);  % 상태 가중치
-% R_ = diag([1e4 1e4]);            % 입력 가중치
-
-Q_ = diag([10 10 5000 100]);  % 상태 가중치
-R_ = diag([1e4 1e4]);            % 입력 가중치
-
-% LQR Gain 계산
-[K_d, S_d, P_d] = dlqr(Ad, Bd, Q_, R_)
-
-% 연속 LQR Gain 계산
-[K_c, S_c, P_c] = lqr(A_, B_, Q_, R_)
-
-% 폐루프 시스템 행렬
-Acl = Ad - Bd * K_d;
-% Acl = Ad;
-
-% 폐루프 극점 계산
-closed_loop_poles = eig(Acl);
-log(closed_loop_poles)/Ts
+% Continuous LQR Gain 계산
+[K_c, S_c, P_c] = lqr(A_, B_, Q_, R_);
 
 % 결과 출력 (이산 시스템)
 disp('Discrete-time Closed-loop poles:');
-disp(closed_loop_poles);
+disp(P_d);
+
+% 결과 출력 (연속 시스템)
+disp('Continuous-time Closed-loop poles:');
+disp(P_c);
 
 % 폐루프 극점 시각화 (이산 시스템)
 figure;
-scatter(real(closed_loop_poles), imag(closed_loop_poles), 'filled', 'DisplayName', 'Poles');
+scatter(real(P_d), imag(P_d), 'filled', 'DisplayName', 'Poles');hold on;
 xlabel('Real Part');
 ylabel('Imaginary Part');
 title('Closed-Loop Pole and Zero Locations (Discrete System)');
 grid on;
-
 % 단위원 시각화
-hold on;
 theta = linspace(0, 2*pi, 100);
 plot(cos(theta), sin(theta), '--r', 'LineWidth', 1, 'DisplayName', 'Unit Circle'); % 단위원
-
-% 제로 계산 (이산 시스템)
-zeros_d = tzero(sys_d);
-scatter(real(zeros_d), imag(zeros_d), 'o', 'filled', 'DisplayName', 'Zeros');
-
 legend;
 axis equal;
 
-% 연속 시간 폐루프 시스템 행렬
-Acl_c = A_ - B_ * K_c;
-% Acl_c = A_;
-
-Bcl_c = B_ * K_c;
-
-syscl_c = ss(Acl_c, Bcl_c, eye(4,4), []);
-% syscl_c = ss(Acl_c, Bcl_c, C_, []);
-
-
-% 연속 시간 폐루프 극점 계산
-closed_loop_poles_c = eig(Acl_c);
-
-% 결과 출력 (연속 시스템)
-disp('Continuous-time Closed-loop poles:');
-disp(closed_loop_poles_c);
 
 % 연속 시간 폐루프 극점 및 제로 시각화
 figure;

@@ -5,14 +5,24 @@ classdef EKF_c
         P % Covariance Matrix
         Q % Process Noise Covariance Matrix
         R % Sensor Noise Covariance Matrix
+
+        F % Model Jacobian
+        H % Observation model Jacobian
+        x_dot
+        h_obs
+
+        dt % sampling time
+        Pol % Calculate Model
     end
 
     methods
-        function obj = EKF_c(initialState, initialCovariance, processNoise, measurementNoise)
+        function obj = EKF_c(initialState, initialCovariance, processNoise, measurementNoise, Pol_, Ts)
             obj.x = initialState;
             obj.P = initialCovariance;
             obj.Q = processNoise;
             obj.R = measurementNoise;
+            obj.Pol = Pol_;
+            obj.dt = Ts;
 
             % 상태 벡터 크기 확인
             stateSize = size(initialState, 1);
@@ -32,31 +42,20 @@ classdef EKF_c
             end
         end
 
+        function obj = predict(obj, u, h)
+            obj.Pol.setState(obj.x, u, h);
+            obj.Pol.calculateDynamics();
+            obj.Pol.calculateJacobian();
 
-        function state = stateTransitionFcn(obj, state, controlInput)
-            % 상태 전이 로직
-            state = state + controlInput;
+            [obj.x, obj.x_dot, obj.F] = obj.Pol.predict_state(obj.dt);
+            obj.P = obj.F * obj.P * obj.F' + obj.Q; % 예측된 오차 공분산 행렬
         end
 
-        function measurement = measurementFcn(obj, state)
-            % 측정 함수 로직
-            measurement = state;
-        end
-
-        function obj = predict(obj, controlInput)
-            % 상태 전이
-            obj.x = obj.stateTransitionFcn(obj.x, controlInput);
-
-            % 공분산 갱신 (Jacobian 생략)
-            obj.P = obj.P + obj.Q;
-        end
-
-        function obj = update(obj, measurement)
-            % 예측 측정값
-            predictedMeasurement = obj.measurementFcn(obj.x);
-
-            % 측정 업데이트 로직 (칼만 이득 생략)
-            obj.x = obj.x + (measurement - predictedMeasurement);
+        function obj = update(obj, z)
+            [obj.h_obs, obj.H] = obj.Pol.predict_measurement(obj.x_dot, obj.x);
+            K = obj.P * obj.H' / (obj.H * obj.P * obj.H' + obj.R); % 칼만 이득
+            obj.x = obj.x + K * (z - obj.h_obs); % 상태 업데이트
+            obj.P = (eye(length(x_prev)) - K * obj.H) * obj.P; % 오차 공분산 업데이트
         end
     end
 end

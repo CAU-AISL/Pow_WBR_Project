@@ -53,6 +53,11 @@ classdef Pol
             [obj.m_B, obj.p_bcom, obj.I_B_B] = calculate_body_total_property(obj.h, obj.phi, obj.params);
         end
 
+        function theta_eq = get_theta_eq(obj, h, phi)
+            [~, p_bcom_, ~] = calculate_body_total_property(h, phi, obj.params);
+            theta_eq = atan(-p_bcom_(1) / (h + p_bcom_(3)));
+        end
+
         function obj = calculateDynamics(obj)
             obj.calculate_M();
             obj.calculate_M_inv();
