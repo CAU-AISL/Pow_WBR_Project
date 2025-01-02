@@ -27,6 +27,7 @@ Logger WIFI_Logger(ssid, password);
 
 Eigen::Matrix<float, 4, 1> x = Eigen::Matrix<float, 4, 1>::Zero();
 Eigen::Matrix<float, 4, 1> x_d = Eigen::Matrix<float, 4, 1>::Zero();
+Eigen::Matrix<float, 2, 1> u_prev = Eigen::Matrix<float, 2, 1>::Zero();
 Eigen::Matrix<float, 2, 1> u = Eigen::Matrix<float, 2, 1>::Zero();
 Eigen::Matrix<float, 8, 1> z = Eigen::Matrix<float, 8, 1>::Zero();
 Eigen::Matrix<float, 2, 1> iq_vec = Eigen::Matrix<float, 2, 1>::Zero();
@@ -96,7 +97,7 @@ void setup() {
   WIFI_Logger.readyToLogTimeStamp();  // 시간 기록
   // Desired states
   WIFI_Logger.readyToLogValue("h_d");
-  WIFI_Logger.readyToLogValue("theta_eq");
+  WIFI_Logger.readyToLogValue("theta_d");
   WIFI_Logger.readyToLogValue("v_d");
   WIFI_Logger.readyToLogValue("psi_dot_d");
 
@@ -129,6 +130,9 @@ void setup() {
   sampling_timer.start();
 }
 
+// ==============================================================================
+//                                    LOOP
+// ==============================================================================
 void loop() {
   // sampling time이 경과했을 때만 실행
   if (sampling_timer.getDuration() >= dt * 1000) {
@@ -148,13 +152,14 @@ void loop() {
       // Running Mode
       //// update Pol state and input for EKF ////
       Pol.setState(x);
-      Pol.setInput(u);
+      // Pol.setInput(u);
+      Pol.setInput(u_prev); // u_k-2
 
       // measurement update
-      MPU6050.readData(); // read k-th IMU measurements
+      MPU6050.readData();  // read k-th IMU measurements
       MPU6050.getIMUMeasurement(z);
 
-      VYB_controller.sendReadStateCommand(); // read k-th motor speed
+      VYB_controller.sendReadStateCommand();  // read k-th motor speed
       VYB_controller.getMotorSpeedMeasurement(z);
       VYB_controller.getMotorCurrentMeasurement(iq_vec);
 
@@ -199,6 +204,7 @@ void loop() {
       //// Send control command of HR controller and VYB controller
       HR_controller.controlHipServos(Pol.get_theta_hips());
       VYB_controller.sendControlCommand();
+      u_prev = u;
       u = VYB_controller.getInputVector();
 
       //============= Logging ======================================================================
@@ -238,6 +244,8 @@ void loop() {
       //=============================================================================================
     } else if (receiver.isReset()) {
       // Estimator Reset
+      x_d.setZero();
+      VYB_controller.theta_d = 0.f;
       x.setZero();
       u.setZero();
       Estimator.reset_estimator();

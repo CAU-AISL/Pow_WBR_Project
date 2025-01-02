@@ -166,7 +166,7 @@ private:
   void extractReadState2Data(const uint8_t* response) {
     temperature = (int8_t)response[FRAME_COMMAND_LENGTH];
     iq_raw = (int16_t)(response[FRAME_COMMAND_LENGTH + 1] | (response[FRAME_COMMAND_LENGTH + 2] << 8));
-    iq = static_cast<float>(iq_raw) * 33 / 2048;
+    iq = static_cast<float>(iq_raw) * 3.3 / 2048;
     speed_raw = (int16_t)(response[FRAME_COMMAND_LENGTH + 3] | (response[FRAME_COMMAND_LENGTH + 4] << 8));
     speed = static_cast<float>(speed_raw) / 10;
     encoder = (uint16_t)(response[FRAME_COMMAND_LENGTH + 5] | (response[FRAME_COMMAND_LENGTH + 6] << 8));

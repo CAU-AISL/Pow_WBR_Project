@@ -37,6 +37,9 @@ const float VEL_MAX = 1;  // 최대 속도 (m/s)
 const float YAW_MAX = 1.5;  // 최대 yaw angular velocity (rad/s)
 
 const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
+// const float MAX_TORQUE = 0.12f;  // 최대 torque command
+const float MAX_TORQUE = 0.24f;  // 최대 torque command
+
 
 // 핫스팟 정보 입력 -> 정보만 입력하면 와이파이 연결 된다.
 // const char* ssid = "Jeongbin";       // 핫스팟 이름
@@ -46,7 +49,7 @@ const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
 const char* ssid = "OSB";       // 핫스팟 이름
 const char* password = "12345678";  // 핫스팟 비밀번호
 
-const float dt = 0.012;  // sampling time
+const float dt = 0.008;  // sampling time
 
 // mm -> m 단위 변환 함수 (벡터)
 template<typename T>

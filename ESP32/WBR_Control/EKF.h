@@ -23,8 +23,8 @@ private:
 public:
   EKF(POL &Pol_)
     : Pol_ref(Pol_),
-      R_cov((Eigen::Matrix<float, 8, 1>() << 1.54239e-3f, 1.93287e-3f, 2.63191e-3f, 3.11351e-6f, 4.12642e-6f, 5.37135e-6f, 3.046e-6f, 3.046e-6f).finished().asDiagonal()),  // sensor noise covariance
-      Q_cov((Eigen::Matrix<float, 4, 1>() <<  4e-5f, 1e-4f, 4e-5f, 1e-6f).finished().asDiagonal())
+      R_cov((Eigen::Matrix<float, 8, 1>() << 1e-2f, 1e-2f, 4e-2f, 1e-4f, 4e-4f, 1e-4f, 3.046e-6f, 3.046e-6f).finished().asDiagonal()),  // sensor noise covariance
+      Q_cov((Eigen::Matrix<float, 4, 1>() <<  1.f, 1.f, 1.f, 1.f).finished().asDiagonal())
       // R_cov((Eigen::Matrix<float, 8, 1>() << 1.54239e-1f, 1.93287e-1f, 2.63191e-1f, 3.11351e-3f, 4.12642e-3f, 5.37135e-3f, 1e-5f, 1e-5f).finished().asDiagonal()),  // sensor noise covariance
       // Q_cov((Eigen::Matrix<float, 4, 1>() << 4e-5f, 1e-4f, 4e-5f, 1e-4f).finished().asDiagonal())
   {
@@ -35,7 +35,7 @@ public:
     F_mat.setZero();
     H.setZero();
     K_mat.setZero();
-    P_pred = Eigen::Matrix<float, 4, 4>::Identity() * 1e-1;
+    P_pred = Eigen::Matrix<float, 4, 4>::Identity() * 1.f;
   }
 
   void printAllEstimationData() {
@@ -120,7 +120,7 @@ public:
 
 
   void reset_estimator() {
-    P = Eigen::Matrix<float, 4, 4>::Identity() * 0.1;
+    P = Eigen::Matrix<float, 4, 4>::Identity() * 1.f;
   }
 
   bool estimate_state(Eigen::Matrix<float, 4, 1> &x_, const Eigen::Matrix<float, 8, 1> &z_) {

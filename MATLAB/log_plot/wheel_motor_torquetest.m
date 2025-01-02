@@ -2,14 +2,14 @@ clc; clear;
 format long;
 
 % CSV 파일 읽기
-% filename = '20241229_logdata_wheelmotor_torquetest_3ms_Kp200_Ki255.csv'; % CSV 파일 이름
-filename = '20241227_logdata_wheelmotor_torquetest_3ms.csv'; % CSV 파일 이름
+filename = '20241229_logdata_wheelmotor_torquetest_3ms_Kp200_Ki255.csv'; % CSV 파일 이름
+% filename = '20241227_logdata_wheelmotor_torquetest_3ms.csv'; % CSV 파일 이름
 
 data = readtable(filename);
 
 % time_cut_idx = 5588;
 % time_cut_idx = 2700;
-time_cut_idx = 300;
+time_cut_idx = 350;
 
 % extract data 
 timeStamp = data.TimeStamp(1:time_cut_idx);
@@ -194,7 +194,7 @@ x_fit = linspace(min(iq_LW_output_filtered), max(iq_LW_output_filtered), 100); %
 y_fit = polyval(coeffs, x_fit); % Calculate y values for the regression line
 plot(x_fit, y_fit, '-g', 'LineWidth', 2, 'DisplayName', 'Linear Fit LW'); % Plot regression line
 grid on;
-legend('show'); hold off;
+legend('show', 'Location', 'best'); hold off;
 
 % Right Wheel: IQ Current vs. Torque
 subplot(3, 2, 2);
@@ -210,7 +210,7 @@ x_fit = linspace(min(iq_RW_output_filtered), max(iq_RW_output_filtered), 100);
 y_fit = polyval(coeffs, x_fit);
 plot(x_fit, y_fit, '-g', 'LineWidth', 2, 'DisplayName', 'Linear Fit RW');
 grid on;
-legend('show'); hold off;
+legend('show', 'Location', 'best'); hold off;
 
 % Left Wheel: Input vs. Torque
 subplot(3, 2, 3);
@@ -226,7 +226,7 @@ x_fit = linspace(min(iq_LW_input_filtered), max(iq_LW_input_filtered), 100);
 y_fit = polyval(coeffs, x_fit);
 plot(x_fit, y_fit, '-g', 'LineWidth', 2, 'DisplayName', 'Linear Fit LW');
 grid on;
-legend('show'); hold off;
+legend('show', 'Location', 'best'); hold off;
 
 % Right Wheel: Input vs. Torque
 subplot(3, 2, 4);
@@ -242,7 +242,7 @@ x_fit = linspace(min(iq_RW_input_filtered), max(iq_RW_input_filtered), 100);
 y_fit = polyval(coeffs, x_fit);
 plot(x_fit, y_fit, '-g', 'LineWidth', 2, 'DisplayName', 'Linear Fit RW');
 grid on;
-legend('show'); hold off;
+legend('show', 'Location', 'best'); hold off;
 
 % Left Wheel: Input vs. Output
 subplot(3, 2, 5);
@@ -257,7 +257,7 @@ coeffs = polyfit(iq_LW_input_filtered, iq_LW_output_filtered, 1);
 x_fit = linspace(min(iq_LW_input_filtered), max(iq_LW_input_filtered), 100);
 y_fit = polyval(coeffs, x_fit);
 plot(x_fit, y_fit, '-g', 'LineWidth', 2, 'DisplayName', 'Linear Fit LW');
-legend('show'); hold off;
+legend('show', 'Location', 'best'); hold off;
 
 % Right Wheel: Input vs. Output
 subplot(3, 2, 6);
@@ -272,7 +272,8 @@ coeffs = polyfit(iq_RW_input_filtered, iq_RW_output_filtered, 1);
 x_fit = linspace(min(iq_RW_input_filtered), max(iq_RW_input_filtered), 100);
 y_fit = polyval(coeffs, x_fit);
 plot(x_fit, y_fit, '-g', 'LineWidth', 2, 'DisplayName', 'Linear Fit RW');
-legend('show'); hold off;
+legend('show', 'Location', 'best'); hold off;
+
 
 
 
