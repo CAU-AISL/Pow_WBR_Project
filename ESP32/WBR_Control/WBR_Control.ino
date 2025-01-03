@@ -6,6 +6,7 @@
 #include "IMU.h"
 #include "POL.h"
 #include "EKF.h"
+#include "CompenFilter.h"
 #include "Logger.h"
 #include "Timer.h"
 
@@ -21,7 +22,8 @@ IMU MPU6050;
 
 HRController HR_controller;
 VYBController VYB_controller(ServoRW, ServoLW);
-EKF Estimator(Pol);
+// EKF Estimator(Pol);
+CompenFilter Estimator(properties);
 
 Logger WIFI_Logger(ssid, password);
 

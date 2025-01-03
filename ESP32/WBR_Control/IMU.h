@@ -41,6 +41,7 @@ public:
     // 2. DLPF 설정 (CONFIG 레지스터)
     Wire.beginTransmission(0x68);  // I2C 주소
     Wire.write(0x1A);              // CONFIG 레지스터
+    // Wire.write(0x00);              // DLPF Off 설정
     Wire.write(0x02);              // DLPF 94Hz 설정
     // Wire.write(0x05);  // DLPF 10Hz 설정
     if (Wire.endTransmission(true) != 0) {
@@ -119,9 +120,9 @@ public:
   // 필터 적용 함수
   void applyFilters() {
     // 가속도에 LPF 적용
-    // lowPassFilter(acc_vec, acc_vec_prev, 10.f);
+    lowPassFilter(acc_vec, acc_vec_prev, 5.f);
     // 자이로에 HPF 적용
-    highPassFilter(gyr_vec, gyr_vec_prev_input, gyr_vec_prev, 0.5f);
+    // highPassFilter(gyr_vec, gyr_vec_prev_input, gyr_vec_prev, 5.f);
 
 
     // lowPassFilter(acc_vec, acc_vec_prev, 5.f);
@@ -153,7 +154,9 @@ public:
   void highPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevInput, Eigen::Vector3f& prevOutput, float cutoffFreq) {
     // 필터 계수 계산
     float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
-    float alpha = RC / (dt + RC);
+    float wc = 1 / RC;
+    // float alpha = RC / (dt + RC);
+    float alpha = exp(-wc*dt);
 
     // HPF 적용
     Eigen::Vector3f temp = input;                      // 현재 입력값을 임시 저장

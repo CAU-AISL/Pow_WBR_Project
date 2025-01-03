@@ -15,19 +15,29 @@ phi = 0;
 Q_ = diag([10 10 5000 100]);  % 상태 가중치
 R_ = diag([1e4 1e4]);            % 입력 가중치
 
+% EKF Parameters
+P_init = eye(4); % 초기 추정 오차 공분산 행렬
+R_cov = diag([1.54239e-3, 1.93287e-3, 2.36791e-3,...
+              3.11351e-6, 4.12642e-6, 5.37135e-6,...
+              3.046e-6, 3.046e-6]); % Sensor noise Covariance Matrix
+Q_cov = diag([4e-5, 1e-4, 4e-5, 1e-6]); % Processor noise Covariance Matrix
 
+% Estimator
+x_hat_init = [0; 0; 0; 0];
 
 model = Pol(properties, dynamic_functions);
 model.setState(zeros(4,1), zeros(2,1),h);
+
+Estimator = EKF_c(x_hat_init, P_init, Q_cov, R_cov, model, Ts);
 
 theta_eq = model.get_theta_eq(h, phi);
 
 x_eq = [theta_eq; 0; 0; 0];
 u_eq = zeros(2,1);
 
-model.setState(x_eq, u_eq, h);
-model.calculateDynamics();
-model.calculateJacobian();
+model = model.setState(x_eq, u_eq, h);
+model = model.calculateDynamics();
+model = model.calculateJacobian();
 
 B = model.B;
 M = model.M;
@@ -67,36 +77,26 @@ disp(P_d);
 disp('Continuous-time Closed-loop poles:');
 disp(P_c);
 
-% 폐루프 극점 시각화 (이산 시스템)
+% Visualize discretized system closed loop poles
 figure;
 scatter(real(P_d), imag(P_d), 'filled', 'DisplayName', 'Poles');hold on;
 xlabel('Real Part');
 ylabel('Imaginary Part');
 title('Closed-Loop Pole and Zero Locations (Discrete System)');
 grid on;
-% 단위원 시각화
 theta = linspace(0, 2*pi, 100);
 plot(cos(theta), sin(theta), '--r', 'LineWidth', 1, 'DisplayName', 'Unit Circle'); % 단위원
 legend;
 axis equal;
 
-
-% 연속 시간 폐루프 극점 및 제로 시각화
+% Visualize continuous system closed loop poles
 figure;
-scatter(real(closed_loop_poles_c), imag(closed_loop_poles_c), 'filled', 'DisplayName', 'Poles');
+scatter(real(closed_loop_poles_c), imag(closed_loop_poles_c), 'filled', 'DisplayName', 'Poles');hold on;
 xlabel('Real Part');
 ylabel('Imaginary Part');
 title('Closed-Loop Pole and Zero Locations (Continuous System)');
 grid on;
-
-% s-평면에서 시각화를 위한 축 조정
-hold on;
 xline(0, '--r', 'LineWidth', 1, 'DisplayName', 'Stability Boundary'); % 안정 영역 기준선 (실수축)
-
-% 제로 계산 (연속 시스템)
-zeros_c = tzero(ss(A_, B_, [], []));
-scatter(real(zeros_c), imag(zeros_c), 'o', 'filled', 'DisplayName', 'Zeros');
-
 legend;
 axis equal;
 
@@ -115,11 +115,6 @@ syscl_c.outputName = output_labels;
 % figure();
 % bodeplot(syscl_c, opts);
 
-% EKF covariance matrix
-P = eye(4); % 초기 추정 오차 공분산 행렬
-R_cov = diag([1.54239e-3, 1.93287e-3, 2.36791e-3, 3.11351e-6, 4.12642e-6, 5.37135e-6, 3.046e-6, 3.046e-6]); % 측정 오차 공분산 행렬
-% R_cov = diag([1.54239e-1, 1.93287e-1, 2.36791e-1, 3.11351e-5, 4.12642e-5, 5.37135e-5, 3.046e-6, 3.046e-6]); % 측정 오차 공분산 행렬
-Q_cov = diag([4e-5, 1e-4, 4e-5, 1e-6]); % 프로세스 노이즈 공분산 행렬
 
 % 초기 설정
 x_eq = [theta_eq; 0; 0; 0];
@@ -200,7 +195,7 @@ for t = 0:dt:3
         
 
         % z(1:3) = 
-
+        Estimator.predict()
         % 예측 단계 (Prediction)
         [x_pred, dx, F] = predict_state(x_hat, u, M_hat, dM_dtheta_hat, nle_hat, dnle_dtheta_hat, dnle_dqdot_hat, B,  Ts);
         P_pred = F * P * F' + Q_cov; % 예측된 오차 공분산 행렬
@@ -242,8 +237,9 @@ for t = 0:dt:3
     
     % 다음 상태 계산
     x_prev = x;
-    x = step(x, M, nle, B, u_real, dt);
-    % x = x;
+    model.setState(x,u,h);
+    model.calculateDynamics();
+    [x, ~, ~] = model.predict_state(dt);
 
     xi = xi + x(2:4)*dt;
 

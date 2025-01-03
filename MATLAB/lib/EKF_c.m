@@ -1,4 +1,4 @@
-classdef EKF_c
+classdef EKF_c < handle
     properties
         x % State Vector
         z % Measurement Vector
