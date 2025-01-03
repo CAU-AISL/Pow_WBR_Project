@@ -6,7 +6,10 @@
 
 class CompenFilter {
 private:
+<<<<<<< HEAD
   Properties properties;
+=======
+>>>>>>> 4784e7ddbf95d4096e7d050cff7e986e5f6c2a47
   float K_compen;                       // Compensation Gain: weight to balance between gyro and accelerometer data
   float acc_angle;                      // Accelerometer-derived angle
   float gyro_angle;                     // Gyroscope-derived angle
@@ -27,14 +30,21 @@ private:
     if (is_first) {
       // Initialize state with first measurement
       x_compen(0) = acc_angle;        // Initial angle from accelerometer
+<<<<<<< HEAD
       gyro_angle = acc_angle;
+=======
+>>>>>>> 4784e7ddbf95d4096e7d050cff7e986e5f6c2a47
       x_compen(1) = z(4);             // Initial angular velocity
       x_compen(2) = 0;                // Initial linear velocity
       x_compen(3) = 0;                // Initial rotation rate
       is_first = false;               // Mark initialization as complete
     } else {
       // Update state using complementary filter logic
+<<<<<<< HEAD
       x_compen(0) = K_compen * gyro_angle + (1.f - K_compen) * acc_angle; // Fusion of gyro and accel angles
+=======
+      x_compen(0) = K_compen * gyro_angle + (1 - K_compen) * acc_angle; // Fusion of gyro and accel angles
+>>>>>>> 4784e7ddbf95d4096e7d050cff7e986e5f6c2a47
       x_compen(1) = z(4);                                               // Angular velocity from measurement
       x_compen(2) = properties.R / 2 * (z(7) - z(6) + 2 * x_compen(1)); // Compute linear velocity
       x_compen(3) = -(z(6) + z(7)) * properties.R / (2 * properties.L); // Compute rotation rate
@@ -43,7 +53,11 @@ private:
 
 public:
   // Constructor: Initialize filter parameters and state
+<<<<<<< HEAD
   CompenFilter(const Properties &properties_) : K_compen(0.9f), properties(properties_) {
+=======
+  CompenFilter() : K_compen(0.9996) {
+>>>>>>> 4784e7ddbf95d4096e7d050cff7e986e5f6c2a47
     x_compen.setZero(); // Set all state values to zero
     z.setZero();        // Set all measurements to zero
     acc_angle = 0;      // Reset accelerometer angle
