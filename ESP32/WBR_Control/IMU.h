@@ -24,7 +24,6 @@ public:
 
   // 생성자
   IMU() {}
-
   bool begin() {
     Wire.begin(SDA_PIN, SCL_PIN, 400000);  // SDA, SCL 핀과 클록 속도 설정
     // clock frequency: 400kHz
@@ -142,22 +141,27 @@ public:
 
   void lowPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, float cutoffFreq) {
     // 필터 계수 계산
-    float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
-    float alpha = dt / (dt + RC);
+    // float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
+    // float alpha = dt / (dt + RC);
+    float cut_off_freq = exp(-2.0f * M_PI * cutoffFreq * dt);  // cut off frequency
 
     // LPF 적용
-    input = alpha * input + (1.0f - alpha) * prevOutput;
+    // input = alpha * input + (1.0f - alpha) * prevOutput;
+    input = cut_off_freq * input + (1.0f - cut_off_freq) * prevOutput;
     prevOutput = input;
   }
 
   void highPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevInput, Eigen::Vector3f& prevOutput, float cutoffFreq) {
     // 필터 계수 계산
-    float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
-    float alpha = RC / (dt + RC);
+    // float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
+    // float alpha = RC / (dt + RC);
+    float cut_off_freq = exp(-2.0f * M_PI * cutoffFreq * dt);  // cut off frequency
 
     // HPF 적용
-    Eigen::Vector3f temp = input;                      // 현재 입력값을 임시 저장
-    input = alpha * (prevOutput + input - prevInput);  // HPF 적용
+    // Eigen::Vector3f temp = input;                      // 현재 입력값을 임시 저장
+    // input = alpha * (prevOutput + input - prevInput);  // HPF 적용
+    Eigen::Vector3f temp = input;                             // 현재 입력값을 임시 저장
+    input = cut_off_freq * prevOutput + (input - prevInput);  // HPF 적용
     prevInput = temp;                                  // 이전 입력값 업데이트
     prevOutput = input;                                // 이전 출력값 업데이트
   }
