@@ -14,8 +14,8 @@
 #define SERIAL_BAUDRATE 115200
 
 // 핀 번호 정의
-#define LH_PIN 13  // 왼쪽 서보 핀
-#define RH_PIN 11  // 오른쪽 서보 핀
+#define LH_PIN 12  // 왼쪽 서보 핀
+#define RH_PIN 18  // 오른쪽 서보 핀
 
 #define SBUS_RX_PIN 17  // SBUS 수신 핀
 
@@ -23,8 +23,8 @@
 #define RS485_TX_PIN 15  // DI (TX) 핀
 #define RS485_RX_PIN 16  // RO (RX) 핀
 
-#define SDA_PIN 9   // SDA MPU6050 핀
-#define SCL_PIN 10  // SCL MPU6050 핀
+#define SDA_PIN 8   // SDA MPU6050 핀
+#define SCL_PIN 9  // SCL MPU6050 핀
 
 // 범위 설정 (height와 phi)
 const float HEIGHT_MIN = 0.07;  // 최소 높이 (m)

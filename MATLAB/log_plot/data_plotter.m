@@ -3,7 +3,7 @@ clc; clear;
 format long;
 
 % CSV 파일 읽기
-filename = '20250102_logdata_complementaryFilter_3.csv'; % CSV 파일 이름
+filename = '20250104_logdata_EKF_LowGain.csv'; % CSV 파일 이름
 
 data = readtable(filename);
 

@@ -1,4 +1,4 @@
-classdef Pol
+classdef Pol < handle
     properties
         x % State Vector
         u % Input Vector
@@ -71,8 +71,8 @@ classdef Pol
             obj.calculate_dnle_dqdot();
         end
 
-        function M = calculate_M(obj)
-            M = obj.func.M_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(2, 2), ...
+        function obj = calculate_M(obj)
+            obj.M = obj.func.M_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(2, 2), ...
                 obj.I_B_B(3, 1), obj.I_B_B(3, 2), obj.I_B_B(3, 3), ...
                 obj.I_B_LW(1, 1), obj.I_B_RW(1, 1), obj.I_B_LW(2, 1), ...
                 obj.I_B_LW(2, 2), obj.I_B_RW(2, 1), obj.I_B_RW(2, 2), ...
@@ -82,12 +82,12 @@ classdef Pol
                 obj.p_bcom(1), obj.p_bcom(2), obj.p_bcom(3), obj.x(1));
         end
 
-        function M_inv = calculate_M_inv(obj)
-            M_inv = obj.M \ eye(size(obj.M));
+        function obj = calculate_M_inv(obj)
+            obj.M_inv = obj.M \ eye(size(obj.M));
         end
 
-        function nle = calculate_nle(obj)
-            nle = obj.func.nle_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(3, 1), ...
+        function obj = calculate_nle(obj)
+            obj.nle = obj.func.nle_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(3, 1), ...
                 obj.I_B_B(3, 2), obj.I_B_B(3, 3), obj.I_B_LW(1, 1), ...
                 obj.I_B_RW(1, 1), obj.I_B_LW(2, 1), obj.I_B_RW(2, 1), ...
                 obj.I_B_LW(3, 1), obj.I_B_LW(3, 2), obj.I_B_LW(3, 3), ...
@@ -97,12 +97,12 @@ classdef Pol
                 obj.x(4), obj.x(1), obj.x(2), obj.x(3));
         end
 
-        function B = calculate_B(obj)
-            B = obj.func.B_f(obj.L, obj.R);
+        function obj = calculate_B(obj)
+            obj.B = obj.func.B_f(obj.L, obj.R);
         end
 
-        function dM_dtheta = calculate_dM_dtheta(obj)
-            dM_dtheta = obj.func.dM_dtheta_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(3, 1), ...
+        function obj = calculate_dM_dtheta(obj)
+            obj.dM_dtheta = obj.func.dM_dtheta_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(3, 1), ...
                 obj.I_B_B(3, 2), obj.I_B_B(3, 3), obj.I_B_LW(1, 1), ...
                 obj.I_B_RW(1, 1), obj.I_B_LW(2, 1), obj.I_B_RW(2, 1), ...
                 obj.I_B_LW(3, 1), obj.I_B_LW(3, 2), obj.I_B_LW(3, 3), ...
@@ -111,8 +111,8 @@ classdef Pol
                 obj.p_bcom(2), obj.p_bcom(3), obj.x(1));
         end
 
-        function dnle_dtheta = calculate_dnle_dtheta(obj)
-            dnle_dtheta = obj.func.dnle_dtheta_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(3, 1), ...
+        function obj = calculate_dnle_dtheta(obj)
+            obj.dnle_dtheta = obj.func.dnle_dtheta_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(3, 1), ...
                 obj.I_B_B(3, 2), obj.I_B_B(3, 3), obj.I_B_LW(1, 1), ...
                 obj.I_B_RW(1, 1), obj.I_B_LW(2, 1), obj.I_B_RW(2, 1), ...
                 obj.I_B_LW(3, 1), obj.I_B_LW(3, 2), obj.I_B_LW(3, 3), ...
@@ -122,8 +122,8 @@ classdef Pol
                 obj.x(4), obj.x(1), obj.x(2), obj.x(3));
         end
 
-        function dnle_dqdot = calculate_dnle_dqdot(obj)
-            dnle_dqdot = obj.func.dnle_dqdot_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(3, 1), ...
+        function obj = calculate_dnle_dqdot(obj)
+            obj.dnle_dqdot = obj.func.dnle_dqdot_f(obj.I_B_B(1, 1), obj.I_B_B(2, 1), obj.I_B_B(3, 1), ...
                 obj.I_B_B(3, 2), obj.I_B_B(3, 3), obj.I_B_LW(1, 1), ...
                 obj.I_B_RW(1, 1), obj.I_B_LW(2, 1), obj.I_B_RW(2, 1), ...
                 obj.I_B_LW(3, 1), obj.I_B_LW(3, 2), obj.I_B_LW(3, 3), ...
@@ -144,9 +144,14 @@ classdef Pol
         end
 
         function [h_obs, H] = predict_measurement(obj, x_dot, x_pred)
-            theta_ddot = x_dot(2);
-            v_dot = x_dot(3);
-            psi_ddot = x_dot(4);
+            % theta_ddot = x_dot(2);
+            % v_dot = x_dot(3);
+            % psi_ddot = x_dot(4);
+
+            theta_ddot = 0;
+            v_dot = 0;
+            psi_ddot = 0;
+
 
             theta = x_pred(1);
             theta_dot = x_pred(2);
@@ -161,6 +166,9 @@ classdef Pol
             h_obs(1) = obj.h * theta_ddot + v_dot * cos_theta - obj.g * sin_theta - obj.h * psi_dot^2 * cos_theta * sin_theta;
             h_obs(2) = psi_dot * v + obj.h * psi_ddot * sin_theta + obj.h * psi_dot * theta_dot * cos_theta * 2.0;
             h_obs(3) = -obj.h * theta_dot^2 + obj.g * cos_theta + v_dot * sin_theta - psi_dot^2 * (obj.h - obj.h * cos_theta^2);
+            % h_obs(1) = - obj.g * sin_theta;
+            % h_obs(2) = 0;
+            % h_obs(3) =  obj.g * cos_theta ;
             h_obs(4) = -psi_dot * sin_theta;
             h_obs(5) = theta_dot;
             h_obs(6) = psi_dot * cos_theta;

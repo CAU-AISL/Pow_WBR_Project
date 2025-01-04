@@ -5,25 +5,31 @@ load('dynamic_properties.mat');
 load('dynamics_functions.mat');
 properties.IG_matrices();
 
-Ts = 0.01;
+Ts = 0.008;
+Ts_lqr = 0.16;
 dt = 0.0001; % simulation dt
 
 h = 0.07; % (m)
 phi = 0;
 
+% desired command
+v_d = 1;
+dpsi_d = 1;
+
 % LQR Weights
-Q_ = diag([10 10 5000 100]);  % 상태 가중치
+Q_ = diag([10 10 100000 1000]);  % 상태 가중치
 R_ = diag([1e4 1e4]);            % 입력 가중치
 
 % EKF Parameters
 P_init = eye(4); % 초기 추정 오차 공분산 행렬
-R_cov = diag([1.54239e-3, 1.93287e-3, 2.36791e-3,...
-              3.11351e-6, 4.12642e-6, 5.37135e-6,...
-              3.046e-6, 3.046e-6]); % Sensor noise Covariance Matrix
-Q_cov = diag([4e-5, 1e-4, 4e-5, 1e-6]); % Processor noise Covariance Matrix
+R_cov = diag([4e-1, 4e1, 4e-1,...
+              1e-2, 1e-4, 1e-2,...
+              0, 0]); % Sensor noise Covariance Matrix
+Q_cov = diag([0, 0, 1e-2, 1e-2]); % Processor noise Covariance Matrix
 
 % Estimator
 x_hat_init = [0; 0; 0; 0];
+x_hat = x_hat_init;
 
 model = Pol(properties, dynamic_functions);
 model.setState(zeros(4,1), zeros(2,1),h);
@@ -35,9 +41,9 @@ theta_eq = model.get_theta_eq(h, phi);
 x_eq = [theta_eq; 0; 0; 0];
 u_eq = zeros(2,1);
 
-model = model.setState(x_eq, u_eq, h);
-model = model.calculateDynamics();
-model = model.calculateJacobian();
+model.setState(x_eq, u_eq, h);
+model.calculateDynamics();
+model.calculateJacobian();
 
 B = model.B;
 M = model.M;
@@ -59,12 +65,19 @@ end
 
 % 이산 시스템 변환
 sys_c = ss(A_, B_, eye(4, 4), []);        % 연속 시스템 생성
-sys_d = c2d(sys_c, Ts, 'zoh');    % ZOH 방식으로 이산화
+sys_d = c2d(sys_c, Ts_lqr, 'zoh');    % ZOH 방식으로 이산화
 Ad = sys_d.A;                    % 이산화된 A 행렬
 Bd = sys_d.B;                    % 이산화된 B 행렬
 
+A_delay = [Ad, Bd; zeros(2,6)];
+B_delay = [zeros(4,2);eye(2)];
+Q_delay = diag([10 10 5000 100 0 0]);  % 상태 가중치
+[K_delay, S_delay, P_delay] = dlqr(A_delay, B_delay, Q_delay, R_);
+K_delay;
+
 % Discrete LQR Gain 계산
 [K_d, S_d, P_d] = dlqr(Ad, Bd, Q_, R_);
+K_d
 
 % Continuous LQR Gain 계산
 [K_c, S_c, P_c] = lqr(A_, B_, Q_, R_);
@@ -91,7 +104,7 @@ axis equal;
 
 % Visualize continuous system closed loop poles
 figure;
-scatter(real(closed_loop_poles_c), imag(closed_loop_poles_c), 'filled', 'DisplayName', 'Poles');hold on;
+scatter(real(P_c), imag(P_c), 'filled', 'DisplayName', 'Poles');hold on;
 xlabel('Real Part');
 ylabel('Imaginary Part');
 title('Closed-Loop Pole and Zero Locations (Continuous System)');
@@ -119,12 +132,10 @@ syscl_c.outputName = output_labels;
 % 초기 설정
 x_eq = [theta_eq; 0; 0; 0];
 x = x_eq + [20 * pi/180; 0; 0; 0];
-x_hat = x + [0 * pi/180; 0; 0; 0];
-del_x = zeros(4, 1);
+x_prev = x;
 z = zeros(8,1);
 
-x_d = [theta_eq; 0; 1; 1];
-
+x_d = [theta_eq; 0; v_d; dpsi_d];
 xi = zeros(3,1) + [x(1);0;0];
 
 u_prev = [0; 0];
@@ -138,75 +149,32 @@ xi_log = zeros(3,1);
 % 시뮬레이션
 idx = 1;
 for t = 0:dt:3
-    del_x = x - x_eq;
-    del_x_d = x_d - x_eq;
-
-    % 시스템 행렬 계산
-    M = M_f(I_B_B(1,1),I_B_B(2,1),I_B_B(2,2),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-        I_B_LW(2,1),I_B_LW(2,2),I_B_RW(2,1),I_B_RW(2,2),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-        I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,h,m_B,m_LW,m_RW,p_bcom(1),p_bcom(2),p_bcom(3),x(1));
-
-    nle = nle_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-        I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3), I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3), ...
-        L,R,g,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3), x(4),x(1),x(2),x(3));
-
-
     % 샘플링 시간에 따라 입력 업데이트
     if mod(idx, floor(Ts / dt)) == 0
-        M_hat = M_f(I_B_B(1,1),I_B_B(2,1),I_B_B(2,2),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-            I_B_LW(2,1),I_B_LW(2,2),I_B_RW(2,1),I_B_RW(2,2),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-            I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,h,m_B,m_LW,m_RW,p_bcom(1),p_bcom(2),p_bcom(3),x_hat(1));
-
-        dM_dtheta_hat = dM_dtheta_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-            I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-            I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3),x_hat(1));
-
-        nle_hat = nle_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-            I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3), I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3), ...
-            L,R,g,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3), x_hat(4),x_hat(1),x_hat(2),x_hat(3));
-
-        dnle_dtheta_hat = dnle_dtheta_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-            I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-            I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,g,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3), ...
-            x_hat(4),x_hat(1),x_hat(2),x_hat(3));
-
-        dnle_dqdot_hat = dnle_dqdot_f(I_B_B(1,1),I_B_B(2,1),I_B_B(3,1),I_B_B(3,2),I_B_B(3,3),I_B_LW(1,1),I_B_RW(1,1), ...
-            I_B_LW(2,1),I_B_RW(2,1),I_B_LW(3,1),I_B_LW(3,2),I_B_LW(3,3),...
-            I_B_RW(3,1),I_B_RW(3,2),I_B_RW(3,3),L,R,h,m_B,p_bcom(1),p_bcom(2),p_bcom(3), ...
-            x_hat(4),x_hat(1),x_hat(2),x_hat(3));
         
         % 측정 벡터 (예시)
         % true 값을 통해 sensor 값 추출
-        [~, f, ~] = predict_state(x_prev, u_prev, M, dM_dtheta, nle, dnle_dtheta, dnle_dqdot, B,  dt);
-        [z, ~] = predict_measurement(f, x_prev, g, h, L, R);
-        
+        model.calculateJacobian();
+        [~, f, ~] = model.predict_state(dt);
+        [z, ~] = model.predict_measurement(f, x_prev);
+
         acc_noise_std = [0.039273; 0.043964; 0.048661];
         gyro_noise_std = [0.0017645; 0.0020313; 0.0023176];
+        mspeed_precision = 0.1*pi/180;
         mspeed_noise_std = [0.1*pi/180; 0.1*pi/180];
         % 입력에 노이즈 추가
         acc_noise = acc_noise_std .* randn(3,1);
         gyro_noise = gyro_noise_std .* randn(3,1);
-        mspeed_noise = mspeed_noise_std .* randn(2,1);
+        % mspeed_noise = mspeed_noise_std .* randn(2,1);
         
         z(1:3) = z(1:3) + acc_noise;
         z(4:6) = z(4:6) + gyro_noise;
-        z(7:8) = z(7:8) + mspeed_noise;
-
+        z(7:8) = round(z(7:8)/mspeed_precision)*mspeed_precision;
+        % z(7:8) = z(7:8) + mspeed_noise;
         
-
-        % z(1:3) = 
-        Estimator.predict()
-        % 예측 단계 (Prediction)
-        [x_pred, dx, F] = predict_state(x_hat, u, M_hat, dM_dtheta_hat, nle_hat, dnle_dtheta_hat, dnle_dqdot_hat, B,  Ts);
-        P_pred = F * P * F' + Q_cov; % 예측된 오차 공분산 행렬
-        % dx = zeros(4,1);
-        % 업데이트 단계 (Update)
-        [h_obs, H] = predict_measurement(dx, x_pred, g, h, L, R);
-        K = P_pred * H' / (H * P_pred * H' + R_cov); % 칼만 이득
-        x_hat = x_pred + K * (z - h_obs); % 상태 업데이트
-        P = (eye(length(x_prev)) - K * H) * P_pred; % 오차 공분산 업데이트
-        
-        del_x_hat = x_hat - x_eq;
+        Estimator.predict(u, h);
+        Estimator.update(z);
+        x_hat = Estimator.x;
         
         % 정의된 범위
         % u_min = -1.128;
@@ -216,7 +184,8 @@ for t = 0:dt:3
         
         u_prev = u;
         % u 계산
-        u = -K_d * (del_x_hat - del_x_d);
+        u = -K_d * (x_hat - x_d);
+        % u = -K_delay * ([x_hat; u_prev] - [x_d; 0; 0]);
 
         % Saturation 적용
         u = max(min(u, u_max), u_min);

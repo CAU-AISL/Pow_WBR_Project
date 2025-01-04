@@ -23,8 +23,8 @@ private:
 public:
   EKF(POL &Pol_)
     : Pol_ref(Pol_),
-      R_cov((Eigen::Matrix<float, 8, 1>() << 1e-3f, 1e-3f, 4e-3f, 1e-5f, 4e-5f, 1e-5f, 3.046e-6f, 3.046e-6f).finished().asDiagonal()),  // sensor noise covariance
-      Q_cov((Eigen::Matrix<float, 4, 1>() <<  1.f, 1.f, 1.f, 1.f).finished().asDiagonal())
+      R_cov((Eigen::Matrix<float, 8, 1>() << 4e-1f, 4.f, 4e-1f, 1e-2f, 1e-4f, 1e-2f, 0, 0).finished().asDiagonal()),  // sensor noise covariance
+      Q_cov((Eigen::Matrix<float, 4, 1>() <<  0, 1.f, 1.f, 1.f).finished().asDiagonal())
       // R_cov((Eigen::Matrix<float, 8, 1>() << 1.54239e-1f, 1.93287e-1f, 2.63191e-1f, 3.11351e-3f, 4.12642e-3f, 5.37135e-3f, 1e-5f, 1e-5f).finished().asDiagonal()),  // sensor noise covariance
       // Q_cov((Eigen::Matrix<float, 4, 1>() << 4e-5f, 1e-4f, 4e-5f, 1e-4f).finished().asDiagonal())
   {
@@ -164,10 +164,12 @@ public:
 private:
   // 관측 모델 함수
   void predict_measurement() {
-    float theta_ddot = Pol_ref.f(1);
-    float v_dot = Pol_ref.f(2);
-    float psi_ddot = Pol_ref.f(3);
-
+    // float theta_ddot = Pol_ref.f(1);
+    // float v_dot = Pol_ref.f(2);
+    // float psi_ddot = Pol_ref.f(3);
+    float theta_ddot = 0.f;
+    float v_dot = 0.f;
+    float psi_ddot = 0.f;
 
     float theta = x_pred(0);
     float theta_dot = x_pred(1);

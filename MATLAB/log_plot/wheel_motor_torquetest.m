@@ -81,7 +81,8 @@ figure;
 % Angular Acceleration 비교
 subplot(3, 2, 1);
 plot(timeStamp_acceleration, tau_LW, 'r', 'DisplayName', '\tau_{LW}'); hold on;
-plot(timeStamp_acceleration, iq_LW_input(1:end-1)*iq_to_actual*torque_constant, 'k', 'DisplayName', '\tau_{LW,in}');
+% plot(timeStamp_acceleration, iq_LW_input(1:end-1)*iq_to_actual*torque_constant, 'k', 'DisplayName', '\tau_{LW,in}');
+plot(timeStamp_acceleration, iq_LW_input(1:end-1)*0.001043224, 'k', 'DisplayName', '\tau_{LW,in}');
 title('Left Wheel torque');
 xlabel('TimeStamp');
 ylabel('torque (Nm)');
@@ -89,7 +90,9 @@ legend('show'); hold off;
 
 subplot(3, 2, 2);
 plot(timeStamp_acceleration, tau_RW, 'b', 'DisplayName', '\tau_{RW}'); hold on;
-plot(timeStamp_acceleration, iq_RW_input(1:end-1)*iq_to_actual*torque_constant, 'k', 'DisplayName', '\tau_{RW,in}');
+% plot(timeStamp_acceleration, iq_RW_input(1:end-1)*iq_to_actual*torque_constant, 'k', 'DisplayName', '\tau_{RW,in}');
+plot(timeStamp_acceleration, iq_RW_input(1:end-1)*0.000857902, 'k', 'DisplayName', '\tau_{RW,in}');
+
 title('Right Wheel torque');
 xlabel('TimeStamp');
 ylabel('torque (Nm)');

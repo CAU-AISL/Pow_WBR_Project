@@ -22,8 +22,8 @@ IMU MPU6050;
 
 HRController HR_controller;
 VYBController VYB_controller(ServoRW, ServoLW);
-// EKF Estimator(Pol);
-CompenFilter Estimator(properties);
+EKF Estimator(Pol);
+// CompenFilter Estimator(properties);
 
 Logger WIFI_Logger(ssid, password);
 
@@ -330,6 +330,7 @@ void loop() {
       //=============================================================================================
 
       serialPrintStates();
+      // MPU6050.printData();
       Serial.println(" Off Mode");
     }
   }

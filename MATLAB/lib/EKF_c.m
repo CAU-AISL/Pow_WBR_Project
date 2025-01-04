@@ -55,7 +55,7 @@ classdef EKF_c < handle
             [obj.h_obs, obj.H] = obj.Pol.predict_measurement(obj.x_dot, obj.x);
             K = obj.P * obj.H' / (obj.H * obj.P * obj.H' + obj.R); % 칼만 이득
             obj.x = obj.x + K * (z - obj.h_obs); % 상태 업데이트
-            obj.P = (eye(length(x_prev)) - K * obj.H) * obj.P; % 오차 공분산 업데이트
+            obj.P = (eye(length(obj.x)) - K * obj.H) * obj.P; % 오차 공분산 업데이트
         end
     end
 end

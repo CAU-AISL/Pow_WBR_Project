@@ -18,9 +18,11 @@ public:
   float temperature;  // 온도 (섭씨)
 
   // 캘리브레이션 값
-  Eigen::Vector3f gyro_bias{ -0.118868900f, -0.0329653600f, 0.0327140395f };    // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.6031676618f, -0.3592370879f, -0.9186593854f };  // (m/s^2)
-
+  Eigen::Vector3f gyro_bias{ -0.1230688696f, -0.0304898514f,	0.01379522641f};    // (rad/s)
+  Eigen::Vector3f accel_bias{ 0.544995687f,	-0.333633411f,	-1.002969875f};  // (m/s^2)
+  // Eigen::Vector3f gyro_bias{ 0.f, 0.f, 0.f};    // (rad/s)
+  // Eigen::Vector3f accel_bias{ 0.f,	0.f,	0.f};  // (m/s^2)
+  
 
   // 생성자
   IMU() {}
@@ -31,7 +33,7 @@ public:
 
     // 1. 슬립 모드 비활성화 (PWR_MGMT_1 레지스터)
     Wire.write(0x6B);  // PWR_MGMT_1 레지스터
-    Wire.write(0);     // 슬립 모드 비활성화
+    Wire.write(0x03);     // 슬립 모드 비활성화
     if (Wire.endTransmission(true) != 0) {
       Serial.println("[Error] Failed to initialize MPU6050. Check connections!");
       return false;
@@ -40,8 +42,8 @@ public:
     // 2. DLPF 설정 (CONFIG 레지스터)
     Wire.beginTransmission(0x68);  // I2C 주소
     Wire.write(0x1A);              // CONFIG 레지스터
-    // Wire.write(0x00);              // DLPF Off 설정
-    Wire.write(0x02);              // DLPF 94Hz 설정
+    Wire.write(0x00);              // DLPF Off 설정
+    // Wire.write(0x02);              // DLPF 94Hz 설정
     // Wire.write(0x05);  // DLPF 10Hz 설정
     if (Wire.endTransmission(true) != 0) {
       Serial.println("[Error] Failed to set DLPF. Check connections!");
@@ -119,7 +121,7 @@ public:
   // 필터 적용 함수
   void applyFilters() {
     // 가속도에 LPF 적용
-    lowPassFilter(acc_vec, acc_vec_prev, 5.f);
+    // lowPassFilter(acc_vec, acc_vec_prev, 5.f);
     // 자이로에 HPF 적용
     // highPassFilter(gyr_vec, gyr_vec_prev_input, gyr_vec_prev, 5.f);
 
@@ -142,34 +144,29 @@ public:
 
   void lowPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, float cutoffFreq) {
     // 필터 계수 계산
-    // float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
-    // float alpha = dt / (dt + RC);
-    float cut_off_freq = exp(-2.0f * M_PI * cutoffFreq * dt);  // cut off frequency
+    float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
+    float alpha = dt / (dt + RC);
+    // float cut_off_freq = exp(-2.0f * M_PI * cutoffFreq * dt);  // cut off frequency
 
     // LPF 적용
-    // input = alpha * input + (1.0f - alpha) * prevOutput;
-    input = cut_off_freq * input + (1.0f - cut_off_freq) * prevOutput;
+    input = alpha * input + (1.0f - alpha) * prevOutput;
+    // input = cut_off_freq * input + (1.0f - cut_off_freq) * prevOutput;
     prevOutput = input;
   }
 
   void highPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevInput, Eigen::Vector3f& prevOutput, float cutoffFreq) {
     // 필터 계수 계산
-<<<<<<< HEAD
     float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
     float wc = 1 / RC;
-    // float alpha = RC / (dt + RC);
-    float alpha = exp(-wc*dt);
-=======
-    // float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
-    // float alpha = RC / (dt + RC);
-    float cut_off_freq = exp(-2.0f * M_PI * cutoffFreq * dt);  // cut off frequency
->>>>>>> 4784e7ddbf95d4096e7d050cff7e986e5f6c2a47
+    float alpha = RC / (dt + RC);
+    // float alpha = exp(-wc*dt);
+
 
     // HPF 적용
-    // Eigen::Vector3f temp = input;                      // 현재 입력값을 임시 저장
-    // input = alpha * (prevOutput + input - prevInput);  // HPF 적용
-    Eigen::Vector3f temp = input;                             // 현재 입력값을 임시 저장
-    input = cut_off_freq * prevOutput + (input - prevInput);  // HPF 적용
+    Eigen::Vector3f temp = input;                      // 현재 입력값을 임시 저장
+    input = alpha * (prevOutput + input - prevInput);  // HPF 적용
+    // Eigen::Vector3f temp = input;                             // 현재 입력값을 임시 저장
+    // input = cut_off_freq * prevOutput + (input - prevInput);  // HPF 적용
     prevInput = temp;                                  // 이전 입력값 업데이트
     prevOutput = input;                                // 이전 출력값 업데이트
   }
