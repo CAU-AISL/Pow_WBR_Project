@@ -14,8 +14,8 @@
 #define SERIAL_BAUDRATE 115200
 
 // 핀 번호 정의
-#define LH_PIN 12  // 왼쪽 서보 핀
-#define RH_PIN 18  // 오른쪽 서보 핀
+#define LH_PIN 13  // 왼쪽 서보 핀
+#define RH_PIN 11  // 오른쪽 서보 핀
 
 #define SBUS_RX_PIN 17  // SBUS 수신 핀
 
@@ -38,7 +38,7 @@ const float YAW_MAX = 3;  // 최대 yaw angular velocity (rad/s)
 
 const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
 // const float MAX_TORQUE = 0.12f;  // 최대 torque command
-const float MAX_TORQUE = 0.24f;  // 최대 torque command
+const float MAX_TORQUE = 0.48f;  // 최대 torque command
 
 
 // 핫스팟 정보 입력 -> 정보만 입력하면 와이파이 연결 된다.

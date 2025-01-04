@@ -14,7 +14,7 @@ data = readtable(filename);
 
 Ts = 0.008;
 
-x_lim = [0, 30];
+x_lim = [0, 60];
 
 psi_dot_hat = data.psi_dot_hat;
 theta_hat = data.theta_hat;
@@ -23,10 +23,10 @@ v_hat = data.v_hat;
 
 % EKF Parameters
 P_init = eye(4)*1; % 초기 추정 오차 공분산 행렬
-R_cov = diag([4e-1, 4e1, 4e-1,...
-              1e-2, 1e-4, 1e-2,...
-              0, 0]); % Sensor noise Covariance Matrix
-Q_cov = diag([0, 0, 1e-2, 1e-2]); % Processor noise Covariance Matrix
+R_cov = diag([2e-1, 3e-1, 1e3,...
+              1e3, 1e-4, 5e-4,...
+              1e-7, 1e-7]); % Sensor noise Covariance Matrix
+Q_cov = diag([0, 1e-5, 1.5e-5, 1]); % Processor noise Covariance Matrix
 
 % Estimator
 x_hat_init = [0; 0; 0; 0];
@@ -82,6 +82,11 @@ for i = 1:length(timeStamp)
     h_obs(:,i) = Estimator.h_obs;
 end
 
+error = h_obs-z; 
+for i = 1 : 8
+    var(error(i,:))
+end
+
 % Plot 데이터 비교
 figure('units','normalized','outerposition',[0 0 1 1]);
 
@@ -131,7 +136,7 @@ subplot(2, 3, 4);
 hold on;
 plot(timeStamp, v_hat, 'r', 'DisplayName', 'v_{hat}'); 
 plot(timeStamp, x_hat_cal(3,:), 'b--', 'DisplayName', 'v_{hat}(cal)'); 
-plot(timeStamp, x_pred(3,:), 'g.', 'DisplayName', 'v_{pred}(cal)'); 
+% plot(timeStamp, x_pred(3,:), 'g.', 'DisplayName', 'v_{pred}(cal)'); 
 plot(timeStamp, v_d, 'k', 'DisplayName', 'v_{d}');
 fill([timeStamp', fliplr(timeStamp')], ...
      [upper_bound, fliplr(lower_bound)], ...
@@ -150,7 +155,7 @@ subplot(2, 3, 5);
 hold on;
 plot(timeStamp, rad2deg(psi_dot_hat), 'r', 'DisplayName', 'd\psi_{hat}'); 
 plot(timeStamp, rad2deg(x_hat_cal(4,:)), 'b--', 'DisplayName', 'd\psi_{hat}(cal)');
-plot(timeStamp, rad2deg(x_pred(4,:)), 'g.', 'DisplayName', 'd\psi_{pred}(cal)'); 
+% plot(timeStamp, rad2deg(x_pred(4,:)), 'g.', 'DisplayName', 'd\psi_{pred}(cal)'); 
 plot(timeStamp, rad2deg(psi_dot_d), 'k', 'DisplayName', 'd\psi_{d}');
 fill([timeStamp', fliplr(timeStamp')], ...
      [rad2deg(upper_bound), fliplr(rad2deg(lower_bound))], ...
@@ -176,38 +181,82 @@ ylabel('Nm');
 xlim(x_lim);
 
 figure('units','normalized','outerposition',[0 0 1 1]);
-total_acc = sqrt(acc_x_imu.^2+acc_y_imu.^2+acc_z_imu.^2);
-subplot(2, 3, 1);
-plot(timeStamp, acc_x_imu, 'r', 'DisplayName', 'acc_x'); hold on;
-plot(timeStamp, acc_y_imu, 'g', 'DisplayName', 'acc_y');
-plot(timeStamp, acc_z_imu, 'b', 'DisplayName', 'acc_z');
-plot(timeStamp, total_acc, 'k', 'DisplayName', 'total');
+% total_acc = sqrt(acc_x_imu.^2+acc_y_imu.^2+acc_z_imu.^2);
+subplot(2, 4, 1);
+hold on;
+plot(timeStamp, acc_x_imu, 'r', 'DisplayName', 'acc_x'); 
+plot(timeStamp, h_obs(1,:), 'g', 'DisplayName', 'acc_x_obs'); 
 title('IMU Acceleration');
 xlabel('TimeStamp');
 ylabel('m/s^2');
 xlim(x_lim);
 legend('show'); hold off;
 
-subplot(2, 3, 4);
-plot(timeStamp, rad2deg(gyr_x_imu), 'r', 'DisplayName', 'gyr_x'); hold on;
-plot(timeStamp, rad2deg(gyr_y_imu), 'g', 'DisplayName', 'gyr_y');
-plot(timeStamp, rad2deg(gyr_z_imu), 'b', 'DisplayName', 'gyr_z');
+subplot(2, 4, 2);
+hold on;
+plot(timeStamp, acc_y_imu, 'r', 'DisplayName', 'acc_y');
+plot(timeStamp, h_obs(2,:), 'g', 'DisplayName', 'acc_y_obs'); 
+title('IMU Acceleration');
+xlabel('TimeStamp');
+ylabel('m/s^2');
+xlim(x_lim);
+legend('show'); hold off;
+
+subplot(2, 4, 3);
+hold on;
+plot(timeStamp, acc_z_imu, 'r', 'DisplayName', 'acc_z');
+plot(timeStamp, h_obs(3,:), 'g', 'DisplayName', 'acc_z_obs'); 
+title('IMU Acceleration');
+xlabel('TimeStamp');
+ylabel('m/s^2');
+xlim(x_lim);
+legend('show'); hold off;
+
+subplot(2, 4, 5);
+hold on;
+plot(timeStamp, rad2deg(gyr_x_imu), 'r', 'DisplayName', 'gyr_x'); 
+plot(timeStamp, rad2deg(h_obs(4,:)), 'g', 'DisplayName', 'gyr_x_obs'); 
 title('IMU Angular Velocity');
 xlabel('TimeStamp');
 ylabel('deg/s');
 xlim(x_lim);
 legend('show'); hold off;
 
-subplot(2, 3, 3);
+
+subplot(2, 4, 6);
+hold on;
+plot(timeStamp, rad2deg(gyr_y_imu), 'r', 'DisplayName', 'gyr_y');
+plot(timeStamp, rad2deg(h_obs(5,:)), 'g', 'DisplayName', 'gyr_y_obs'); 
+title('IMU Angular Velocity');
+xlabel('TimeStamp');
+ylabel('deg/s');
+xlim(x_lim);
+legend('show'); hold off;
+
+subplot(2, 4, 7);
+hold on;
+plot(timeStamp, rad2deg(gyr_z_imu), 'r', 'DisplayName', 'gyr_z');
+plot(timeStamp, rad2deg(h_obs(6,:)), 'g', 'DisplayName', 'gyr_z_obs'); 
+title('IMU Angular Velocity');
+xlabel('TimeStamp');
+ylabel('deg/s');
+xlim(x_lim);
+legend('show'); hold off;
+
+subplot(2, 4, 4);
+hold on;
 plot(timeStamp, rad2deg(theta_dot_RW), 'r', 'DisplayName', 'd\theta_{RW}');
+plot(timeStamp, rad2deg(h_obs(7,:)), 'g', 'DisplayName', 'd\theta_{RW}_obs'); 
 title('Right Wheel speed');
 xlabel('TimeStamp');
 ylabel('deg/s');
 xlim(x_lim);
 legend('show'); hold off;
 
-subplot(2, 3, 6);
+subplot(2, 4, 8);
+hold on;
 plot(timeStamp, rad2deg(theta_dot_LW), 'r', 'DisplayName', 'd\theta_{LW}');
+plot(timeStamp, rad2deg(h_obs(8,:)), 'g', 'DisplayName', 'd\theta_{LW}_obs'); 
 title('Left Wheel speed');
 xlabel('TimeStamp');
 ylabel('deg/s');

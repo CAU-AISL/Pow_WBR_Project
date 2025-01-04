@@ -33,7 +33,7 @@ public:
 
     // 1. 슬립 모드 비활성화 (PWR_MGMT_1 레지스터)
     Wire.write(0x6B);  // PWR_MGMT_1 레지스터
-    Wire.write(0x03);     // 슬립 모드 비활성화
+    Wire.write(0x00);     // 슬립 모드 비활성화
     if (Wire.endTransmission(true) != 0) {
       Serial.println("[Error] Failed to initialize MPU6050. Check connections!");
       return false;

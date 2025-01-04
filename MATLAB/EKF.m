@@ -13,19 +13,19 @@ h = 0.07; % (m)
 phi = 0;
 
 % desired command
-v_d = 1;
-dpsi_d = 1;
+v_d = 2;
+dpsi_d = 3;
 
 % LQR Weights
-Q_ = diag([0 10 100000 1000]);  % 상태 가중치
-R_ = diag([1e4 1e4]);            % 입력 가중치
+Q_ = diag([0 1000 50000 1000]);  % 상태 가중치
+R_ = diag([1e6 1e6]);            % 입력 가중치
 
 % EKF Parameters
 P_init = eye(4); % 초기 추정 오차 공분산 행렬
 R_cov = diag([4e-1, 4e1, 4e-1,...
               1e-2, 1e-4, 1e-2,...
               0, 0]); % Sensor noise Covariance Matrix
-Q_cov = diag([0, 0, 1e-2, 1e-2]); % Processor noise Covariance Matrix
+Q_cov = diag([0, 1, 1, 1]); % Processor noise Covariance Matrix
 
 % Estimator
 x_hat_init = [0; 0; 0; 0];
@@ -156,7 +156,7 @@ for t = 0:dt:3
         % true 값을 통해 sensor 값 추출
         model.calculateJacobian();
         [~, f, ~] = model.predict_state(dt);
-        [z, ~] = model.predict_measurement(f, x_prev);
+        [z, ~] = model.predict_measurement(f, x);
 
         acc_noise_std = [0.039273; 0.043964; 0.048661];
         gyro_noise_std = [0.0017645; 0.0020313; 0.0023176];
@@ -179,8 +179,8 @@ for t = 0:dt:3
         % 정의된 범위
         % u_min = -1.128;
         % u_max = 1.128;
-        u_min = -0.24;
-        u_max = 0.24;
+        u_min = -0.48;
+        u_max = 0.48;
         
         u_prev = u;
         % u 계산
