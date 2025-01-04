@@ -6,7 +6,7 @@ load('dynamics_functions.mat');
 properties.IG_matrices();
 
 Ts = 0.008;
-Ts_lqr = 0.16;
+Ts_lqr = 0.008;
 dt = 0.0001; % simulation dt
 
 h = 0.07; % (m)
@@ -17,7 +17,7 @@ v_d = 1;
 dpsi_d = 1;
 
 % LQR Weights
-Q_ = diag([10 10 100000 1000]);  % 상태 가중치
+Q_ = diag([0 10 100000 1000]);  % 상태 가중치
 R_ = diag([1e4 1e4]);            % 입력 가중치
 
 % EKF Parameters

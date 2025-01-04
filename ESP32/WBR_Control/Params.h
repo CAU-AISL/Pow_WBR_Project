@@ -33,8 +33,8 @@ const float HEIGHT_MAX = 0.2;   // 최대 높이 (m)
 const float PHI_MIN = -30.0;  // phi 최소값 (degree)
 const float PHI_MAX = 30.0;   // phi 최대값 (degree)
 
-const float VEL_MAX = 1;  // 최대 속도 (m/s)
-const float YAW_MAX = 1.5;  // 최대 yaw angular velocity (rad/s)
+const float VEL_MAX = 1.5;  // 최대 속도 (m/s)
+const float YAW_MAX = 3;  // 최대 yaw angular velocity (rad/s)
 
 const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
 // const float MAX_TORQUE = 0.12f;  // 최대 torque command
