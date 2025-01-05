@@ -19,12 +19,19 @@ private:
   Eigen::Matrix<float, 2, 4> K;                ///< 현재 사용 중인 LQR 게인
   Eigen::Matrix<float, 2, 1> u;                ///< 제어 입력 벡터
 
-  float iq_factor;         ///< 전류 변환 계수 (A/LSB)
-  float torque_constant;   ///< 토크 상수 (Nm/A)
-  float saturation;        ///< input saturation
+  float iq_factor;        ///< 전류 변환 계수 (A/LSB)
+  float torque_constant;  ///< 토크 상수 (Nm/A)
+  float LW_factor = 0.001043224f;
+  float RW_factor = 0.000857902f;
+
+  float AngleFixRate = 0.1;
+
+  float saturation;  ///< input saturation
+  Eigen::Matrix<float, 2, 1> saturation_vec;
   const int RW_bias = 12;  ///< 우측 휠 모터의 바이어스 값
 
 public:
+  float theta_d;
   /**
    * @brief 생성자: VYBController 초기화
    * @param ServoRW_ 우측 휠 서보 객체 참조
@@ -32,69 +39,72 @@ public:
    */
   VYBController(MGServo& ServoRW_, MGServo& ServoLW_)
     : ServoRW(ServoRW_), ServoLW(ServoLW_) {
+    theta_d = 0.f;
     // 전류 및 토크 상수 초기화
-    iq_factor = 0.01611328f;  // (A/LSB) 33 / 2048
-    torque_constant = 0.07f;   // (Nm/A) * reduction ratio
+    iq_factor = 0.001611328f;  // (A/LSB) 3.3 / 2048
+    torque_constant = 0.7f;    // (Nm/A) * reduction ratio
     saturation = iq_factor * torque_constant * MAX_TORQUE_COMMAND;
+    // saturation_vec << MAX_TORQUE_COMMAND * RW_factor, MAX_TORQUE_COMMAND * LW_factor;
+    saturation_vec << MAX_TORQUE, MAX_TORQUE;
 
 
     // LQR 게인 초기화 (하드코딩된 데이터 삽입)
     Eigen::Matrix<float, 2, 4> mat;
     //////////////////////////////////////////////////////////
-    mat << 1.35605099f, 0.16778375f, 0.42689449f, -0.06729931f,
-      -1.35643197f, -0.16830087f, -0.42482000f, -0.06781604f;
+    mat << 0.79157211f, 0.08949879f, 0.13324021f, -0.04843267f,
+      -0.80162498f, -0.09129509f, -0.13488934f, -0.04909636f;
     Ks.push_back(mat);
 
-    mat << 1.42034111f, 0.17660064f, 0.42692224f, -0.06726744f,
-      -1.41994706f, -0.17704838f, -0.42433059f, -0.06786118f;
+    mat << 0.82749528f, 0.09377660f, 0.13284322f, -0.04844744f,
+      -0.83769858f, -0.09563814f, -0.13426330f, -0.04915773f;
     Ks.push_back(mat);
 
-    mat << 1.48271293f, 0.18559313f, 0.42704183f, -0.06723351f,
-      -1.48154285f, -0.18596943f, -0.42397447f, -0.06789856f;
+    mat << 0.86248546f, 0.09817186f, 0.13272420f, -0.04843592f,
+      -0.87284050f, -0.10010141f, -0.13393901f, -0.04919017f;
     Ks.push_back(mat);
 
-    mat << 1.54292142f, 0.19473772f, 0.42725392f, -0.06719865f,
-      -1.54098383f, -0.19504100f, -0.42375126f, -0.06792935f;
+    mat << 0.89646446f, 0.10268749f, 0.13287970f, -0.04840456f,
+      -0.90697205f, -0.10468726f, -0.13391117f, -0.04920005f;
     Ks.push_back(mat);
 
-    mat << 1.60101827f, 0.20401895f, 0.42754517f, -0.06716290f,
-      -1.59832686f, -0.20424799f, -0.42364406f, -0.06795408f;
+    mat << 0.92946708f, 0.10731846f, 0.13327102f, -0.04835495f,
+      -0.94013083f, -0.10939071f, -0.13413915f, -0.04918921f;
     Ks.push_back(mat);
 
-    mat << 1.65713041f, 0.21342430f, 0.42790034f, -0.06712614f,
-      -1.65370181f, -0.21357812f, -0.42363379f, -0.06797322f;
+    mat << 0.96155309f, 0.11205740f, 0.13385600f, -0.04828783f,
+      -0.97237973f, -0.11420460f, -0.13457902f, -0.04915871f;
     Ks.push_back(mat);
 
-    mat << 1.71140334f, 0.22294341f, 0.42830534f, -0.06708825f,
-      -1.70725582f, -0.22302123f, -0.42370272f, -0.06798717f;
+    mat << 0.99278639f, 0.11689660f, 0.13459647f, -0.04820401f,
+      -1.00378535f, -0.11912147f, -0.13519096f, -0.04910964f;
     Ks.push_back(mat);
 
-    mat << 1.76398179f, 0.23256801f, 0.42874807f, -0.06704922f,
-      -1.75913450f, -0.23256921f, -0.42383555f, -0.06799642f;
+    mat << 1.02322897f, 0.12182895f, 0.13545998f, -0.04810470f,
+      -1.03441171f, -0.12413443f, -0.13594105f, -0.04904345f;
     Ks.push_back(mat);
 
-    mat << 1.81500279f, 0.24229201f, 0.42921857f, -0.06700915f,
-      -1.80947526f, -0.24221608f, -0.42401961f, -0.06800143f;
+    mat << 1.05293953f, 0.12684856f, 0.13642001f, -0.04799157f,
+      -1.06431876f, -0.12923772f, -0.13680135f, -0.04896198f;
     Ks.push_back(mat);
 
-    mat << 1.86459355f, 0.25211175f, 0.42970897f, -0.06696826f,
-      -1.85840550f, -0.25195828f, -0.42424474f, -0.06800273f;
+    mat << 1.08197396f, 0.13195122f, 0.13745562f, -0.04786668f,
+      -1.09356295f, -0.13442718f, -0.13774963f, -0.04886743f;
     Ks.push_back(mat);
 
-    mat << 1.91287229f, 0.26202648f, 0.43021336f, -0.06692684f,
-      -1.90604354f, -0.26179514f, -0.42450323f, -0.06800087f;
+    mat << 1.11038720f, 0.13713502f, 0.13855115f, -0.04773247f,
+      -1.12219903f, -0.13970087f, -0.13876898f, -0.04876231f;
     Ks.push_back(mat);
 
-    mat << 1.95995210f, 0.27203954f, 0.43072772f, -0.06688534f,
-      -1.95250261f, -0.27173005f, -0.42478966f, -0.06799642f;
+    mat << 1.13823694f, 0.14240134f, 0.13969602f, -0.04759179f,
+      -1.15028372f, -0.14506002f, -0.13984764f, -0.04864950f;
     Ks.push_back(mat);
 
-    mat << 2.00595178f, 0.28216102f, 0.43124988f, -0.06684445f,
-      -1.99790158f, -0.28177308f, -0.42510088f, -0.06799015f;
+    mat << 1.16559157f, 0.14775666f, 0.14088482f, -0.04744880f,
+      -1.17788281f, -0.15051066f, -0.14097876f, -0.04853311f;
     Ks.push_back(mat);
 
-    mat << 2.05102644f, 0.29241454f, 0.43177925f, -0.06680590f,
-      -2.04239490f, -0.29194751f, -0.42543585f, -0.06798365f;
+    mat << 1.19254970f, 0.15321643f, 0.14211740f, -0.04731278f,
+      -1.20508696f, -0.15606684f, -0.14215981f, -0.04842216f;
     Ks.push_back(mat);
     /////////////////////////////////////////////////////////////////
   }
@@ -153,14 +163,30 @@ public:
    * @param x 현재 상태 벡터
    */
   void computeInput(Eigen::Matrix<float, 4, 1>& x_d, Eigen::Matrix<float, 4, 1>& x) {
+
+    // if (x_d(0) - x(0) < 0) {
+    //   theta_d -= AngleFixRate * dt;
+    // } else {
+    //   theta_d += AngleFixRate * dt;
+    // }
+    // x_d(0) = theta_d;
+
     u = K * (x_d - x);
 
+    // // Input saturation
+    // for (int j = 0; j < 2; j++) {
+    //   if (u(j) > saturation) {
+    //     u(j) = saturation;
+    //   } else if (u(j) < -saturation) {
+    //     u(j) = -saturation;
+    //   }
+    // }
     // Input saturation
     for (int j = 0; j < 2; j++) {
-      if (u(j) > saturation) {
-        u(j) = saturation;
-      } else if (u(j) < -saturation) {
-        u(j) = -saturation;
+      if (u(j) > saturation_vec(j)) {
+        u(j) = saturation_vec(j);
+      } else if (u(j) < -saturation_vec(j)) {
+        u(j) = -saturation_vec(j);
       }
     }
   }
@@ -169,15 +195,18 @@ public:
    * @brief 계산된 제어 명령을 서보에 전송
    */
   void sendControlCommand() {
-    float u_RW = u(0) / (iq_factor * torque_constant);
-    float u_LW = u(1) / (iq_factor * torque_constant);
+    // float u_RW = u(0) / (iq_factor * torque_constant);
+    // float u_LW = u(1) / (iq_factor * torque_constant);
 
-    // Right Wheel motor의 마찰로 인해 발생하는 torque 문제를 조정해줌
-    if (u_RW < 0) {
-      u_RW -= RW_bias;
-    } else if (u_RW > 0) {
-      u_RW += RW_bias;
-    }
+    // // Right Wheel motor의 마찰로 인해 발생하는 torque 문제를 조정해줌
+    // if (u_RW < 0) {
+    //   u_RW -= RW_bias;
+    // } else if (u_RW > 0) {
+    //   u_RW += RW_bias;
+    // }
+
+    float u_RW = u(0) / RW_factor;
+    float u_LW = u(1) / LW_factor;
 
     ServoRW.sendTorqueControlCommand(static_cast<int16_t>(u_RW));
     ServoLW.sendTorqueControlCommand(static_cast<int16_t>(u_LW));

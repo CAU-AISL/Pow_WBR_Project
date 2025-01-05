@@ -14,7 +14,7 @@
 #define SERIAL_BAUDRATE 115200
 
 // 핀 번호 정의
-#define LH_PIN 12  // 왼쪽 서보 핀
+#define LH_PIN 13  // 왼쪽 서보 핀
 #define RH_PIN 11  // 오른쪽 서보 핀
 
 #define SBUS_RX_PIN 17  // SBUS 수신 핀
@@ -23,8 +23,8 @@
 #define RS485_TX_PIN 15  // DI (TX) 핀
 #define RS485_RX_PIN 16  // RO (RX) 핀
 
-#define SDA_PIN 9   // SDA MPU6050 핀
-#define SCL_PIN 10  // SCL MPU6050 핀
+#define SDA_PIN 8   // SDA MPU6050 핀
+#define SCL_PIN 9  // SCL MPU6050 핀
 
 // 범위 설정 (height와 phi)
 const float HEIGHT_MIN = 0.07;  // 최소 높이 (m)
@@ -33,10 +33,13 @@ const float HEIGHT_MAX = 0.2;   // 최대 높이 (m)
 const float PHI_MIN = -30.0;  // phi 최소값 (degree)
 const float PHI_MAX = 30.0;   // phi 최대값 (degree)
 
-const float VEL_MAX = 1;  // 최대 속도 (m/s)
-const float YAW_MAX = 1.5;  // 최대 yaw angular velocity (rad/s)
+const float VEL_MAX = 1.5;  // 최대 속도 (m/s)
+const float YAW_MAX = 3;  // 최대 yaw angular velocity (rad/s)
 
 const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
+// const float MAX_TORQUE = 0.12f;  // 최대 torque command
+const float MAX_TORQUE = 0.48f;  // 최대 torque command
+
 
 // 핫스팟 정보 입력 -> 정보만 입력하면 와이파이 연결 된다.
 // const char* ssid = "Jeongbin";       // 핫스팟 이름
@@ -46,7 +49,7 @@ const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
 const char* ssid = "OSB";       // 핫스팟 이름
 const char* password = "12345678";  // 핫스팟 비밀번호
 
-const float dt = 0.012;  // sampling time
+const float dt = 0.008;  // sampling time
 
 // mm -> m 단위 변환 함수 (벡터)
 template<typename T>

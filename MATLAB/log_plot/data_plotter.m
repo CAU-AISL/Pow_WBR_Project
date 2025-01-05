@@ -1,0 +1,232 @@
+clc; clear; 
+% close all;
+format long;
+
+% CSV 파일 읽기
+filename = '20250104_logdata_EKF_LowGain.csv'; % CSV 파일 이름
+
+data = readtable(filename);
+
+% extract data 
+timeStamp = data.TimeStamp;
+acc_x_imu = data.acc_x; % m/s^2
+acc_y_imu = data.acc_y; % m/s^2
+acc_z_imu = data.acc_z; % m/s^2
+gyr_x_imu = data.gyr_x; % rad/s
+gyr_y_imu = data.gyr_y; % rad/s
+gyr_z_imu = data.gyr_z; % rad/s
+
+cal_time = data.cal_time;
+
+current_LW = data.current_LW;
+current_RW = data.current_RW;
+
+h_d = data.h_d;
+theta_d = data.theta_d;
+v_d = data.v_d;
+psi_dot_d = data.psi_dot_d;
+
+psi_dot_hat = data.psi_dot_hat;
+theta_hat = data.theta_hat;
+theta_dot_hat = data.theta_dot_hat;
+v_hat = data.v_hat;
+
+theta_dot_LW = data.theta_dot_LW;
+theta_dot_RW = data.theta_dot_RW;
+
+tau_LW = data.tau_LW;
+tau_RW = data.tau_RW;
+
+% Sampling time 계산 (TimeStamp는 밀리초 단위라고 가정)
+dt = diff(timeStamp) / 1000; % 초 단위로 변환
+Ts = 0.008;
+
+% Speed를 사용하여 Acceleration 계산
+theta_ddot_LW = diff(theta_dot_LW) ./ dt; 
+theta_ddot_RW = diff(theta_dot_RW) ./ dt;
+
+% 시간축 조정
+timeStamp_acceleration = timeStamp(1:end-1); % Acceleration 시간축
+
+% Plot 데이터 비교
+figure('units','normalized','outerposition',[0 0 1 1]);
+
+subplot(2, 3, 1);
+plot(timeStamp, rad2deg(theta_hat), 'r', 'DisplayName', '\theta_{hat}'); hold on;
+plot(timeStamp, rad2deg(theta_d), 'k', 'DisplayName', '\theta_{d}');
+title('pitch angle');
+xlabel('TimeStamp');
+ylabel('deg');
+legend('show'); hold off;
+
+subplot(2, 3, 2);
+plot(timeStamp, rad2deg(theta_dot_hat), 'r', 'DisplayName', 'd\theta_{hat}'); hold on;
+plot(timeStamp, zeros(length(timeStamp),1), 'k', 'DisplayName', 'd\theta_{d}');
+title('pitch angular rate');
+xlabel('TimeStamp');
+ylabel('deg/s');
+legend('show'); hold off;
+
+subplot(2, 3, 4);
+plot(timeStamp, v_hat, 'r', 'DisplayName', 'v_{hat}'); hold on;
+plot(timeStamp, v_d, 'k', 'DisplayName', 'v_{d}');
+title('velocity');
+xlabel('TimeStamp');
+ylabel('m/s');
+legend('show'); hold off;
+
+subplot(2, 3, 5);
+plot(timeStamp, rad2deg(psi_dot_hat), 'r', 'DisplayName', 'd\psi_{hat}'); hold on;
+plot(timeStamp, rad2deg(psi_dot_d), 'k', 'DisplayName', 'd\psi_{d}');
+title('yaw angular rate');
+xlabel('TimeStamp');
+ylabel('deg/s');
+legend('show'); hold off;
+
+subplot(2, 3, 3);
+plot(timeStamp, tau_RW, 'g', 'DisplayName', '\tau_{RW}'); hold on;
+plot(timeStamp, current_RW * 0.000857902 / (3.3/2048), 'r', 'DisplayName', 'current_{RW}');
+title('Right Wheel Input');
+xlabel('TimeStamp');
+ylabel('Nm');
+
+subplot(2, 3, 6);
+plot(timeStamp, tau_LW, 'g', 'DisplayName', '\tau_{LW}'); hold on;
+plot(timeStamp, current_LW * 0.001043224 / (3.3/2048), 'r', 'DisplayName', 'current_{LW}');
+title('Left Wheel Input');
+xlabel('TimeStamp');
+ylabel('Nm');
+
+figure('units','normalized','outerposition',[0 0 1 1]);
+total_acc = sqrt(acc_x_imu.^2+acc_y_imu.^2+acc_z_imu.^2);
+subplot(2, 3, 1);
+plot(timeStamp, acc_x_imu, 'r', 'DisplayName', 'acc_x'); hold on;
+plot(timeStamp, acc_y_imu, 'g', 'DisplayName', 'acc_y');
+plot(timeStamp, acc_z_imu, 'b', 'DisplayName', 'acc_z');
+plot(timeStamp, total_acc, 'k', 'DisplayName', 'total');
+title('IMU Acceleration');
+xlabel('TimeStamp');
+ylabel('m/s^2');
+legend('show'); hold off;
+
+subplot(2, 3, 4);
+plot(timeStamp, rad2deg(gyr_x_imu), 'r', 'DisplayName', 'gyr_x'); hold on;
+plot(timeStamp, rad2deg(gyr_y_imu), 'g', 'DisplayName', 'gyr_y');
+plot(timeStamp, rad2deg(gyr_z_imu), 'b', 'DisplayName', 'gyr_z');
+title('IMU Angular Velocity');
+xlabel('TimeStamp');
+ylabel('deg/s');
+legend('show'); hold off;
+
+subplot(2, 3, 2);
+plot(timeStamp, current_RW, 'b', 'DisplayName', 'current_{RW}');
+title('Right Wheel Current');
+xlabel('TimeStamp');
+ylabel('Current (A)');
+legend('show'); hold off;
+
+subplot(2, 3, 5);
+plot(timeStamp, current_LW, 'g', 'DisplayName', 'current_{LW}');
+title('Left Wheel Current');
+xlabel('TimeStamp');
+ylabel('Current (A)');
+legend('show'); hold off;
+
+subplot(2, 3, 3);
+plot(timeStamp, rad2deg(theta_dot_RW), 'r', 'DisplayName', 'd\theta_{RW}');
+title('Right Wheel speed');
+xlabel('TimeStamp');
+ylabel('deg/s');
+legend('show'); hold off;
+
+subplot(2, 3, 6);
+plot(timeStamp, rad2deg(theta_dot_LW), 'r', 'DisplayName', 'd\theta_{LW}');
+title('Left Wheel speed');
+xlabel('TimeStamp');
+ylabel('deg/s');
+legend('show'); hold off;
+
+% Fast Fourier Transform
+figure('units', 'normalized', 'outerposition', [0 0 1 1]);
+
+% Define common properties
+line_width = 1.5;
+font_size = 12;
+titles = {"acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z"};
+y_labels = {"Magnitude (m/s^2)", "Magnitude (m/s^2)", "Magnitude (m/s^2)", ...
+            "Magnitude (deg/s)", "Magnitude (deg/s)", "Magnitude (deg/s)"};
+% data = {acc_x_imu, acc_y_imu, acc_z_imu, ...
+%         rad2deg(gyr_x_imu), rad2deg(gyr_y_imu), rad2deg(gyr_z_imu)};
+
+data = {acc_x_imu, acc_y_imu, acc_z_imu, ...
+        gyr_x_imu, gyr_y_imu, gyr_z_imu};
+for i = 1:6
+    subplot(2, 3, i);
+    [f, P] = get_fft(data{i}, Ts);
+    if (i == 3)
+        f = f(2:end);
+        P = P(2:end);
+    end
+    plot(f, P, 'LineWidth', line_width, 'Color', [0 0.447 0.741]); % Use MATLAB default blue color
+    hold on;
+    
+    % Highlight peak frequency
+    [~, peak_idx] = max(P);
+    peak_freq = f(peak_idx);
+    peak_mag = P(peak_idx);
+    plot(peak_freq, peak_mag, 'ro', 'MarkerSize', 8, 'LineWidth', 1.5);
+    text(peak_freq, peak_mag, sprintf('  %.1f Hz', peak_freq), ...
+         'FontSize', font_size, 'Color', 'red', 'VerticalAlignment', 'bottom');
+    
+    xlabel("Frequency (Hz)", 'FontSize', font_size);
+    ylabel(y_labels{i}, 'FontSize', font_size);
+    title(titles{i}, 'FontSize', font_size + 2, 'FontWeight', 'bold');
+    grid on;
+    xlim([0, max(f)]); % Optional: Limit frequency range to useful values
+end
+
+% Add a shared super title
+sgtitle("Frequency Analysis of IMU Data", 'FontSize', font_size + 4, 'FontWeight', 'bold');
+
+
+% Fast Fourier Transform
+figure('units', 'normalized', 'outerposition', [0 0 1 1]);
+
+% Define common properties
+line_width = 1.5;
+font_size = 12;
+titles = {"\theta_{hat}", "d\theta_{hat}", "\tau_{RW}", "v_{hat}", "d\psi_{hat}", "\tau_{LW}"};
+y_labels = {"Magnitude (deg)", "Magnitude (deg/s)", "Magnitude (Nm)", ...
+            "Magnitude (m/s)", "Magnitude (deg/s)", "Magnitude (Nm)"};
+data = {rad2deg(theta_hat), rad2deg(theta_dot_hat), tau_RW, ...
+        v_hat, rad2deg(psi_dot_hat), tau_LW};
+
+for i = 1:6
+    subplot(2, 3, i);
+    [f, P] = get_fft(data{i}, Ts);
+    % if (i == 3)
+    %     f = f(2:end);
+    %     P = P(2:end);
+    % end
+    plot(f, P, 'LineWidth', line_width, 'Color', [0 0.447 0.741]); % Use MATLAB default blue color
+    hold on;
+    
+    % Highlight peak frequency
+    [~, peak_idx] = max(P);
+    peak_freq = f(peak_idx);
+    peak_mag = P(peak_idx);
+    plot(peak_freq, peak_mag, 'ro', 'MarkerSize', 8, 'LineWidth', 1.5);
+    text(peak_freq, peak_mag, sprintf('  %.1f Hz', peak_freq), ...
+         'FontSize', font_size, 'Color', 'red', 'VerticalAlignment', 'bottom');
+    
+    xlabel("Frequency (Hz)", 'FontSize', font_size);
+    ylabel(y_labels{i}, 'FontSize', font_size);
+    title(titles{i}, 'FontSize', font_size + 2, 'FontWeight', 'bold');
+    grid on;
+    xlim([0, max(f)]); % Optional: Limit frequency range to useful values
+end
+
+% Add a shared super title
+sgtitle("Frequency Analysis of IMU Data", 'FontSize', font_size + 4, 'FontWeight', 'bold');
+
+

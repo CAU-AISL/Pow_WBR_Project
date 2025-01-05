@@ -11,23 +11,29 @@ public:
   Eigen::Matrix<int16_t, 3, 1> acc_raw_vec, gyr_raw_vec;
   Eigen::Matrix<float, 3, 1> acc_vec, gyr_vec;
   Eigen::Matrix<float, 3, 1> acc_vec_prev, gyr_vec_prev;
+  Eigen::Matrix<float, 3, 1> acc_vec_prev_input, gyr_vec_prev_input;
+  Eigen::Matrix<float, 3, 1> acc_vec_prev_prev_input, acc_vec_prev_prev_output;
+  Eigen::Matrix<float, 3, 1> gyr_vec_prev_prev_input, gyr_vec_prev_prev_output;
+
   float temperature;  // 온도 (섭씨)
 
   // 캘리브레이션 값
-  Eigen::Vector3f gyro_bias{ -0.118868900f, -0.0329653600f, 0.0327140395f };    // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.6031676618f, -0.3592370879f, -0.9186593854f };  // (m/s^2)
+  Eigen::Vector3f gyro_bias{ -0.1230688696f, -0.0304898514f,	0.01379522641f};    // (rad/s)
+  Eigen::Vector3f accel_bias{ 0.544995687f,	-0.333633411f,	-1.002969875f};  // (m/s^2)
+  // Eigen::Vector3f gyro_bias{ 0.f, 0.f, 0.f};    // (rad/s)
+  // Eigen::Vector3f accel_bias{ 0.f,	0.f,	0.f};  // (m/s^2)
+  
 
   // 생성자
   IMU() {}
-
   bool begin() {
     Wire.begin(SDA_PIN, SCL_PIN, 400000);  // SDA, SCL 핀과 클록 속도 설정
     // clock frequency: 400kHz
-    Wire.beginTransmission(0x68);          // I2C 주소
+    Wire.beginTransmission(0x68);  // I2C 주소
 
     // 1. 슬립 모드 비활성화 (PWR_MGMT_1 레지스터)
     Wire.write(0x6B);  // PWR_MGMT_1 레지스터
-    Wire.write(0);     // 슬립 모드 비활성화
+    Wire.write(0x00);     // 슬립 모드 비활성화
     if (Wire.endTransmission(true) != 0) {
       Serial.println("[Error] Failed to initialize MPU6050. Check connections!");
       return false;
@@ -36,8 +42,9 @@ public:
     // 2. DLPF 설정 (CONFIG 레지스터)
     Wire.beginTransmission(0x68);  // I2C 주소
     Wire.write(0x1A);              // CONFIG 레지스터
-    Wire.write(0x02);              // DLPF 94Hz 설정
-    // Wire.write(0x05);              // DLPF 10Hz 설정
+    Wire.write(0x00);              // DLPF Off 설정
+    // Wire.write(0x02);              // DLPF 94Hz 설정
+    // Wire.write(0x05);  // DLPF 10Hz 설정
     if (Wire.endTransmission(true) != 0) {
       Serial.println("[Error] Failed to set DLPF. Check connections!");
       return false;
@@ -54,7 +61,13 @@ public:
     gyr_vec.setZero();
     acc_vec_prev.setZero();
     gyr_vec_prev.setZero();
-    temperature = 0;  // 온도 (섭씨)
+    acc_vec_prev_input.setZero();
+    gyr_vec_prev_input.setZero();
+    acc_vec_prev_prev_input.setZero();
+    acc_vec_prev_prev_output.setZero();
+    gyr_vec_prev_prev_input.setZero();
+    gyr_vec_prev_prev_output.setZero();
+    temperature = 0;
   }
 
   void getIMUMeasurement(Eigen::Matrix<float, 8, 1>& z) {
@@ -107,36 +120,91 @@ public:
 
   // 필터 적용 함수
   void applyFilters() {
-    float alphaLPF = cutoffFrequencyLPF(10);   // LPF 기준 주파수 10Hz
-    float alphaHPF = cutoffFrequencyHPF(0.5);  // HPF 기준 주파수 0.5Hz
-
     // 가속도에 LPF 적용
-    // lowPassFilter(acc_vec, acc_vec_prev, alphaLPF);
-
+    // lowPassFilter(acc_vec, acc_vec_prev, 5.f);
     // 자이로에 HPF 적용
-    // highPassFilter(gyr_vec, gyr_vec_prev, alphaHPF);
+    // highPassFilter(gyr_vec, gyr_vec_prev_input, gyr_vec_prev, 5.f);
+
+
+    // lowPassFilter(acc_vec, acc_vec_prev, 5.f);
+    // lowPassFilter(gyr_vec, gyr_vec_prev, 5.f);
+    // highPassFilter(acc_vec, acc_vec_prev_input, acc_vec_prev, 15.f);
+    // highPassFilter(gyr_vec, gyr_vec_prev_input, gyr_vec_prev, 15.f);
+
+    // notchFilter(acc_vec, acc_vec_prev_input, acc_vec_prev_prev_input,
+    //             acc_vec_prev, acc_vec_prev_prev_output, 12.0f, 5.0f);
+    // notchFilter(gyr_vec, gyr_vec_prev_input, gyr_vec_prev_prev_input,
+    //             gyr_vec_prev, gyr_vec_prev_prev_output, 12.0f, 5.0f);
+
+    // notchFilter(acc_vec, acc_vec_prev_input, acc_vec_prev_prev_input,
+    //             acc_vec_prev, acc_vec_prev_prev_output, 20.0f, 5.0f);
+    // notchFilter(gyr_vec, gyr_vec_prev_input, gyr_vec_prev_prev_input,
+    //             gyr_vec_prev, gyr_vec_prev_prev_output, 20.0f, 5.0f);
   }
 
-  void lowPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, const float alpha) {
-    input = alpha * input + (1 - alpha) * prevOutput;
+  void lowPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, float cutoffFreq) {
+    // 필터 계수 계산
+    float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
+    float alpha = dt / (dt + RC);
+    // float cut_off_freq = exp(-2.0f * M_PI * cutoffFreq * dt);  // cut off frequency
+
+    // LPF 적용
+    input = alpha * input + (1.0f - alpha) * prevOutput;
+    // input = cut_off_freq * input + (1.0f - cut_off_freq) * prevOutput;
     prevOutput = input;
   }
 
-  void highPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevOutput, const float alpha) {
+  void highPassFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevInput, Eigen::Vector3f& prevOutput, float cutoffFreq) {
+    // 필터 계수 계산
+    float RC = 1.0f / (2.0f * M_PI * cutoffFreq);  // Time constant
+    float wc = 1 / RC;
+    float alpha = RC / (dt + RC);
+    // float alpha = exp(-wc*dt);
+
+
+    // HPF 적용
+    Eigen::Vector3f temp = input;                      // 현재 입력값을 임시 저장
+    input = alpha * (prevOutput + input - prevInput);  // HPF 적용
+    // Eigen::Vector3f temp = input;                             // 현재 입력값을 임시 저장
+    // input = cut_off_freq * prevOutput + (input - prevInput);  // HPF 적용
+    prevInput = temp;                                  // 이전 입력값 업데이트
+    prevOutput = input;                                // 이전 출력값 업데이트
+  }
+
+  void notchFilter(Eigen::Vector3f& input, Eigen::Vector3f& prevInput, Eigen::Vector3f& prevPrevInput,
+                   Eigen::Vector3f& prevOutput, Eigen::Vector3f& prevPrevOutput, float targetFreq, float Q) {
+    // 필터 계수 계산
+    float omega = 2.0f * M_PI * targetFreq * dt;  // 각 주파수 (라디안)
+    float alpha = sin(omega) / (2.0f * Q);        // Q-factor에 따른 감쇠 계수
+    float cosOmega = cos(omega);
+
+    float b0 = 1.0f;
+    float b1 = -2.0f * cosOmega;
+    float b2 = 1.0f;
+    float a0 = 1.0f + alpha;
+    float a1 = -2.0f * cosOmega;
+    float a2 = 1.0f - alpha;
+
+    // 계수 정규화
+    b0 /= a0;
+    b1 /= a0;
+    b2 /= a0;
+    a1 /= a0;
+    a2 /= a0;
+
+    // 노치 필터 적용
     Eigen::Vector3f temp = input;
-    input = alpha * (prevOutput + input - prevOutput);
-    prevOutput = temp;
+    input = b0 * input + b1 * prevInput + b2 * prevPrevInput
+            - a1 * prevOutput - a2 * prevPrevOutput;
+
+    // 이전 상태 업데이트
+    prevPrevInput = prevInput;
+    prevInput = temp;
+    prevPrevOutput = prevOutput;
+    prevOutput = input;
   }
 
-  float cutoffFrequencyLPF(float f_c) {
-    float tau = 1.0 / (2.0 * M_PI * f_c);
-    return dt / (tau + dt);
-  }
 
-  float cutoffFrequencyHPF(float f_c) {
-    float tau = 1.0 / (2.0 * M_PI * f_c);
-    return tau / (tau + dt);
-  }
 
   // 데이터를 Serial Plotter에 출력하는 함수
   void printData() {

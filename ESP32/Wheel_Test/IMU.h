@@ -22,39 +22,6 @@ public:
 
   bool begin() {
     Wire.begin(SDA_PIN, SCL_PIN, 400000);  // SDA, SCL 핀과 클록 속도 설정
-    Wire.beginTransmission(0x68);          // I2C 주소
-
-    // 1. 슬립 모드 비활성화 (PWR_MGMT_1 레지스터)
-    Wire.write(0x6B);  // PWR_MGMT_1 레지스터
-    Wire.write(0);     // 슬립 모드 비활성화
-    if (Wire.endTransmission(true) != 0) {
-      Serial.println("[Error] Failed to initialize MPU6050. Check connections!");
-      return false;
-    }
-#ifndef IMU_H
-#define IMU_H
-
-#include "Params.h"
-#include <Wire.h>
-
-class IMU {
-public:
-  // 센서의 측정값
-  int16_t Tmp;
-  Eigen::Matrix<int16_t, 3, 1> acc_raw_vec, gyr_raw_vec;
-  Eigen::Matrix<float, 3, 1> acc_vec, gyr_vec;
-  Eigen::Matrix<float, 3, 1> acc_vec_prev, gyr_vec_prev;
-  float temperature;  // 온도 (섭씨)
-
-  // 캘리브레이션 값
-  Eigen::Vector3f gyro_bias{ -0.118868900f, -0.0329653600f, 0.0327140395f };    // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.6031676618f, -0.3592370879f, -0.9186593854f };  // (m/s^2)
-
-  // 생성자
-  IMU() {}
-
-  bool begin() {
-    Wire.begin(SDA_PIN, SCL_PIN, 400000);  // SDA, SCL 핀과 클록 속도 설정
     // clock frequency: 400kHz
     Wire.beginTransmission(0x68);          // I2C 주소
 
