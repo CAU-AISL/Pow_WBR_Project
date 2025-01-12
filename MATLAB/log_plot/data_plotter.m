@@ -3,7 +3,7 @@ clc; clear;
 format long;
 
 % CSV 파일 읽기
-filename = '20250104_logdata_EKF_LowGain.csv'; % CSV 파일 이름
+filename = ['20250110_logdata_HipServoVibration_test_h70_2_back.csv']; % CSV 파일 이름
 
 data = readtable(filename);
 
@@ -103,7 +103,7 @@ subplot(2, 3, 1);
 plot(timeStamp, acc_x_imu, 'r', 'DisplayName', 'acc_x'); hold on;
 plot(timeStamp, acc_y_imu, 'g', 'DisplayName', 'acc_y');
 plot(timeStamp, acc_z_imu, 'b', 'DisplayName', 'acc_z');
-plot(timeStamp, total_acc, 'k', 'DisplayName', 'total');
+% plot(timeStamp, total_acc, 'k', 'DisplayName', 'total');
 title('IMU Acceleration');
 xlabel('TimeStamp');
 ylabel('m/s^2');

@@ -213,5 +213,38 @@ classdef Pol < handle
             H(7, 4) = -obj.L / obj.R;
             H(8, 4) = -obj.L / obj.R;
         end
+
+        function h_obs = get_measurement_truth(obj)
+
+            x_dot = [obj.x(2); obj.M_inv * (-obj.nle + obj.B * obj.u)];
+
+            theta_ddot = x_dot(2);
+            v_dot = x_dot(3);
+            psi_ddot = x_dot(4);
+
+            % theta_ddot = 0;
+            % v_dot = 0;
+            % psi_ddot = 0;
+
+
+            theta = obj.x(1);
+            theta_dot = obj.x(2);
+            v = obj.x(3);
+            psi_dot = obj.x(4);
+
+            cos_theta = cos(theta);
+            sin_theta = sin(theta);
+
+            % h_obs 계산
+            h_obs = zeros(8, 1); % 결과를 저장할 벡터
+            h_obs(1) = obj.h * theta_ddot + v_dot * cos_theta - obj.g * sin_theta - obj.h * psi_dot^2 * cos_theta * sin_theta;
+            h_obs(2) = psi_dot * v + obj.h * psi_ddot * sin_theta + obj.h * psi_dot * theta_dot * cos_theta * 2.0;
+            h_obs(3) = -obj.h * theta_dot^2 + obj.g * cos_theta + v_dot * sin_theta - psi_dot^2 * (obj.h - obj.h * cos_theta^2);
+            h_obs(4) = -psi_dot * sin_theta;
+            h_obs(5) = theta_dot;
+            h_obs(6) = psi_dot * cos_theta;
+            h_obs(7) = theta_dot - v / obj.R - (obj.L * psi_dot) / obj.R;
+            h_obs(8) = -theta_dot + v / obj.R - (obj.L * psi_dot) / obj.R;
+        end
     end
 end

@@ -1,7 +1,7 @@
 clc; clear;
 
 % CSV 파일 읽기
-filename = '20241207_0409_logdata_withwheel_torque_speed_iqvalue_offset10_sampletime0.2s_10to1000.csv'; % CSV 파일 이름
+filename = '20250109_logdata_HipServoVibration_test_h200.2s_10to1000.csv'; % CSV 파일 이름
 rawData = readmatrix(filename); % CSV 데이터를 행렬로 읽기
 
 % 변환 상수
