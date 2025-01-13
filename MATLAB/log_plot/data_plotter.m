@@ -3,12 +3,12 @@ clc; clear;
 format long;
 
 % CSV 파일 읽기
-filename = ['20250110_logdata_HipServoVibration_test_h70_2_back.csv']; % CSV 파일 이름
+filename = ['20250112_logdata_EKF_LowGain_withaccLPF_VICON_005.csv']; % CSV 파일 이름
 
 data = readtable(filename);
 
 % extract data 
-timeStamp = data.TimeStamp;
+timeStamp = data.TimeStamp / 1000;
 acc_x_imu = data.acc_x; % m/s^2
 acc_y_imu = data.acc_y; % m/s^2
 acc_z_imu = data.acc_z; % m/s^2
@@ -38,7 +38,7 @@ tau_LW = data.tau_LW;
 tau_RW = data.tau_RW;
 
 % Sampling time 계산 (TimeStamp는 밀리초 단위라고 가정)
-dt = diff(timeStamp) / 1000; % 초 단위로 변환
+dt = diff(timeStamp); % 초 단위로 변환
 Ts = 0.008;
 
 % Speed를 사용하여 Acceleration 계산
@@ -48,54 +48,69 @@ theta_ddot_RW = diff(theta_dot_RW) ./ dt;
 % 시간축 조정
 timeStamp_acceleration = timeStamp(1:end-1); % Acceleration 시간축
 
-% Plot 데이터 비교
-figure('units','normalized','outerposition',[0 0 1 1]);
+% % Plot 데이터 비교
+% figure('units','normalized','outerposition',[0 0 1 1]);
+% min_idx = round(10/Ts);
+% max_idx = round(40/Ts);
+% cutted_idx = min_idx:max_idx;
+% 
+% % subplot(2, 3, 1);
+% subplot(2, 2, 1);
+% plot(timeStamp(cutted_idx), rad2deg(theta_hat(cutted_idx)), 'r', 'DisplayName', '\theta_{hat}', 'LineWidth', 1.5); hold on;
+% % plot(timeStamp, rad2deg(theta_d), 'k', 'DisplayName', '\theta_{d}');
+% title('\theta_{hat}');
+% grid on;
+% xlabel('Time (s)');
+% ylabel('Angle (deg)');
+% xlim([10,40]);
+% legend('show'); hold off;
+% 
+% % subplot(2, 3, 2);
+% subplot(2, 2, 2);
+% plot(timeStamp(cutted_idx), rad2deg(theta_dot_hat(cutted_idx)), 'r', 'DisplayName', 'd\theta_{hat}', 'LineWidth', 1.5); hold on;
+% % plot(timeStamp, zeros(length(timeStamp),1), 'k', 'DisplayName', 'd\theta_{d}');
+% title('\theta^{dot}_{hat}');
+% grid on;
+% xlabel('Time (s)');
+% ylabel('Angular rate (deg/s)');
+% xlim([10,40]);
+% legend('show'); hold off;
+% 
+% % subplot(2, 3, 4);
+% subplot(2, 2, 3);
+% plot(timeStamp(cutted_idx), v_hat(cutted_idx), 'r', 'DisplayName', 'v_{hat}', 'LineWidth', 1.5); hold on;
+% % plot(timeStamp, v_d, 'k', 'DisplayName', 'v_{d}');
+% title('v_{hat}');
+% grid on;
+% xlabel('Time (s)');
+% ylabel('Velocity (m/s)');
+% xlim([10,40]);
+% legend('show'); hold off;
+% 
+% % subplot(2, 3, 5);
+% subplot(2, 2, 4);
+% plot(timeStamp(cutted_idx), rad2deg(psi_dot_hat(cutted_idx)), 'r', 'DisplayName', 'd\psi_{hat}', 'LineWidth', 1.5); hold on;
+% % plot(timeStamp, rad2deg(psi_dot_d), 'k', 'DisplayName', 'd\psi_{d}');
+% title('yaw^{dot}_{hat}');
+% grid on;
+% xlabel('Time (s)');
+% ylabel('Angular rate (deg/s)');
+% xlim([10,40]);
+% legend('show'); hold off;
 
-subplot(2, 3, 1);
-plot(timeStamp, rad2deg(theta_hat), 'r', 'DisplayName', '\theta_{hat}'); hold on;
-plot(timeStamp, rad2deg(theta_d), 'k', 'DisplayName', '\theta_{d}');
-title('pitch angle');
-xlabel('TimeStamp');
-ylabel('deg');
-legend('show'); hold off;
-
-subplot(2, 3, 2);
-plot(timeStamp, rad2deg(theta_dot_hat), 'r', 'DisplayName', 'd\theta_{hat}'); hold on;
-plot(timeStamp, zeros(length(timeStamp),1), 'k', 'DisplayName', 'd\theta_{d}');
-title('pitch angular rate');
-xlabel('TimeStamp');
-ylabel('deg/s');
-legend('show'); hold off;
-
-subplot(2, 3, 4);
-plot(timeStamp, v_hat, 'r', 'DisplayName', 'v_{hat}'); hold on;
-plot(timeStamp, v_d, 'k', 'DisplayName', 'v_{d}');
-title('velocity');
-xlabel('TimeStamp');
-ylabel('m/s');
-legend('show'); hold off;
-
-subplot(2, 3, 5);
-plot(timeStamp, rad2deg(psi_dot_hat), 'r', 'DisplayName', 'd\psi_{hat}'); hold on;
-plot(timeStamp, rad2deg(psi_dot_d), 'k', 'DisplayName', 'd\psi_{d}');
-title('yaw angular rate');
-xlabel('TimeStamp');
-ylabel('deg/s');
-legend('show'); hold off;
-
-subplot(2, 3, 3);
-plot(timeStamp, tau_RW, 'g', 'DisplayName', '\tau_{RW}'); hold on;
-plot(timeStamp, current_RW * 0.000857902 / (3.3/2048), 'r', 'DisplayName', 'current_{RW}');
-title('Right Wheel Input');
-xlabel('TimeStamp');
-ylabel('Nm');
-
-subplot(2, 3, 6);
-plot(timeStamp, tau_LW, 'g', 'DisplayName', '\tau_{LW}'); hold on;
-plot(timeStamp, current_LW * 0.001043224 / (3.3/2048), 'r', 'DisplayName', 'current_{LW}');
-title('Left Wheel Input');
-xlabel('TimeStamp');
-ylabel('Nm');
+% subplot(2, 3, 3);
+% plot(timeStamp, tau_RW, 'g', 'DisplayName', '\tau_{RW}'); hold on;
+% plot(timeStamp, current_RW * 0.000857902 / (3.3/2048), 'r', 'DisplayName', 'current_{RW}');
+% title('Right Wheel Input');
+% xlabel('TimeStamp');
+% ylabel('Nm');
+% 
+% subplot(2, 3, 6);
+% plot(timeStamp, tau_LW, 'g', 'DisplayName', '\tau_{LW}'); hold on;
+% plot(timeStamp, current_LW * 0.001043224 / (3.3/2048), 'r', 'DisplayName', 'current_{LW}');
+% title('Left Wheel Input');
+% xlabel('TimeStamp');
+% ylabel('Nm');
 
 figure('units','normalized','outerposition',[0 0 1 1]);
 total_acc = sqrt(acc_x_imu.^2+acc_y_imu.^2+acc_z_imu.^2);
@@ -163,9 +178,9 @@ data = {acc_x_imu, acc_y_imu, acc_z_imu, ...
 for i = 1:6
     subplot(2, 3, i);
     [f, P] = get_fft(data{i}, Ts);
-    if (i == 3)
-        f = f(2:end);
-        P = P(2:end);
+    if (i <= 3)
+        f = f(4:end);
+        P = P(4:end);
     end
     plot(f, P, 'LineWidth', line_width, 'Color', [0 0.447 0.741]); % Use MATLAB default blue color
     hold on;
@@ -230,3 +245,11 @@ end
 sgtitle("Frequency Analysis of IMU Data", 'FontSize', font_size + 4, 'FontWeight', 'bold');
 
 
+
+% =========================================================================================
+figure('units', 'normalized', 'outerposition', [0 0 1 1]);
+plot(timeStamp, h_d, 'r', 'DisplayName', 'd\theta_{LW}');
+title('desired height');
+xlabel('TimeStamp');
+ylabel('m');
+legend('show'); hold off;

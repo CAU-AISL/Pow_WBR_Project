@@ -8,13 +8,13 @@ load('dynamic_properties.mat');
 load('dynamics_functions.mat');
 
 % CSV 파일 읽기
-filename = '20250109_logdata_EKF_LowGain_withaccLPF_VICON_001.csv'; % CSV 파일 이름
+filename = '20250112_logdata_EKF_LowGain_withaccLPF_VICON_005.csv'; % CSV 파일 이름
 
 data = readtable(filename);
 
 Ts = 0.008;
 
-x_lim = [0, 40];
+x_lim = [10, 40];
 
 psi_dot_hat = data.psi_dot_hat;
 theta_hat = data.theta_hat;
