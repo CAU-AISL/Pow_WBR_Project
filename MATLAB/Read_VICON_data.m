@@ -1,5 +1,5 @@
 clc; clear;
-% close all;
+% delete(findall(0, 'Type', 'figure')); % 이렇게 해야 uifigure가 제거됨
 format long;
 
 addpath("lib\");
@@ -11,7 +11,7 @@ filename = '20250112_VICON_Test_005.csv'; % CSV 파일 이름
 FPS = 250; % Hz
 h = 0.2; % height (m)
 r = 0.072; % wheel radius
-time_cutter = [1.24, 30];
+time_cutter = [6.028, 30];
 
 % CSV 파일 전체 읽기 (문자열 포함)
 rawData = readcell(filename);
@@ -82,7 +82,7 @@ psi_dot_trues = gradient(yaws) * FPS;
 screenSize = get(0, 'ScreenSize'); % 화면 크기 가져오기
 
 % uifigure 생성 (전체 화면 크기로 설정)
-fig = uifigure('Name', filename, 'Position', [0, 0, screenSize(3), screenSize(4)*0.97]);
+fig = uifigure('Name', filename + " Read_VICON_data", 'Position', [0, 0, screenSize(3), screenSize(4)*0.97]);
 tabGroup = uitabgroup(fig, 'Position', [0, 0, fig.Position(3), fig.Position(4)]);
 
 % =================================== Figure 1 ============================

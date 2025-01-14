@@ -84,8 +84,9 @@ properties.l4 = 137 * 1e-3;             % (m)
 properties.l5 = 8 * 1e-3;               % (m)
 
 
-properties.L = 123 * 1e-3;              % Distance between center and wheel (m)
-properties.R = 76.2 * 1e-3;             % Wheel Radius (m)
+properties.L = 0.123;              % Distance between center and wheel (m)
+properties.R = 0.072;             % Wheel Radius (m)
+% properties.R = 76.2 * 1e-3;             % Wheel Radius (m)
 
 
 % 각 link들의 CoM Offset (순서: [Body, TAR, TAL, TPR, TPL, CR, CL])

@@ -9,7 +9,7 @@ Ts = 0.008;
 Ts_lqr = 0.008;
 dt = 0.0001; % simulation dt
 
-h = 0.07; % (m)
+h = 0.2; % (m)
 phi = 0;
 
 % desired command
@@ -17,8 +17,8 @@ v_d = 2;
 dpsi_d = 3;
 
 % LQR Weights
-Q_ = diag([0 1000 50000 1000]);  % 상태 가중치
-R_ = diag([1e6 1e6]);            % 입력 가중치
+Q_ = diag([10 10 5000 100]);  % 상태 가중치
+R_ = diag([1e5 1e5]);            % 입력 가중치
 
 % EKF Parameters
 P_init = eye(4); % 초기 추정 오차 공분산 행렬
