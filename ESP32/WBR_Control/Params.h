@@ -10,7 +10,7 @@
 #define GMM2_TO_KGM2(gmm2) ((gmm2)*1e-9)
 
 // BaudRate 설정
-#define RS485_BAUDRATE  460800 // Motor와 같이 맞춰줘야함
+#define RS485_BAUDRATE 460800  // Motor와 같이 맞춰줘야함
 #define SERIAL_BAUDRATE 115200
 
 // 핀 번호 정의
@@ -33,12 +33,13 @@ const float HEIGHT_MAX = 0.2;   // 최대 높이 (m)
 const float PHI_MIN = -30.0;  // phi 최소값 (degree)
 const float PHI_MAX = 30.0;   // phi 최대값 (degree)
 
-const float VEL_MAX = 1.5;  // 최대 속도 (m/s)
-const float YAW_MAX = 3;  // 최대 yaw angular velocity (rad/s)
+const float VEL_MAX = 2;  // 최대 속도 (m/s)
+const float YAW_MAX = 3.14;    // 최대 yaw angular velocity (rad/s)
 
 const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
 // const float MAX_TORQUE = 0.12f;  // 최대 torque command
-const float MAX_TORQUE = 0.48f;  // 최대 torque command
+// const float MAX_TORQUE = 0.48f;  // 최대 torque command
+const float MAX_TORQUE = 0.75f;  // 최대 torque command
 
 
 // 핫스팟 정보 입력 -> 정보만 입력하면 와이파이 연결 된다.
@@ -46,7 +47,7 @@ const float MAX_TORQUE = 0.48f;  // 최대 torque command
 // const char* password = "james0928";  // 핫스팟 비밀번호
 // const char* ssid = "Woodaengtang";       // 핫스팟 이름
 // const char* password = "jonghyun1234";  // 핫스팟 비밀번호
-const char* ssid = "OSB";       // 핫스팟 이름
+const char* ssid = "OSB";           // 핫스팟 이름
 const char* password = "12345678";  // 핫스팟 비밀번호
 
 const float dt = 0.008;  // sampling time
@@ -116,7 +117,7 @@ inline Properties createDefaultProperties() {
     0.137,                    // l4
     0.008,                    // l5
     0.123,                    // L
-    0.0762                    // R
+    0.072                     // R
   };
 
   // Mainbody
@@ -177,19 +178,20 @@ inline Properties createDefaultProperties() {
 
   // Wheel Left
   props.m_LW = G_TO_KG(237.11770281f);
-  props.CoM_LW = mmToMVector(Eigen::Matrix<float, 3, 1>(-0.00000687f, 0.43740164f, -0.00000028f));
-  props.I_LW = gmm2ToKgm2Matrix((Eigen::Matrix<float, 3, 3>() << 377169.50236306f, -0.00684531f, -0.00114686f,
-                                 -0.00684531f, 723999.02807526f, 0.00006205f,
-                                 -0.00114686f, 0.00006205f, 377169.52206100f)
+  props.CoM_LW = mmToMVector(Eigen::Matrix<float, 3, 1>(-0.00306494587f, 0.12343740164f, -0.19989737481f));
+  props.I_LW = gmm2ToKgm2Matrix((Eigen::Matrix<float, 3, 3>() << 349730.56785517f, -0.00575668f, 0.00665860f,
+                                 -0.00575668f, 669844.41406104f, 0.00370445f,
+                                 0.00665860f, 0.00370445f, 349730.57723613f)
                                   .finished());
 
   // Wheel Right
   props.m_RW = G_TO_KG(214.11770281f);
-  props.CoM_RW = mmToMVector(Eigen::Matrix<float, 3, 1>(-0.00000761f, 0.48438625f, -0.00000031f));
-  props.I_RW = gmm2ToKgm2Matrix((Eigen::Matrix<float, 3, 3>() << 334104.60295742f, -0.00692262f, -0.00045120f,
-                                 -0.00692262f, 640742.79507983f, 0.00005987f,
-                                 -0.00045120f, 0.00005987f, 334104.65585037f)
-                                  .finished());                                
+  props.CoM_RW = mmToMVector(Eigen::Matrix<float, 3, 1>(-0.00306493346f, -0.12348438625f, -0.19989738227f));
+  props.I_RW = gmm2ToKgm2Matrix((Eigen::Matrix<float, 3, 3>() << 310126.57864280f, -0.00604291f, 0.02440920f,
+                                 -0.00604291f, 593418.76029417f, 0.00337816f,
+                                 0.02440920f, 0.00337816f, 310126.60628687f)
+                                  .finished());
+
   return props;
 }
 
