@@ -34,7 +34,7 @@ elseif Case_num == 3
 end
     
 
-Q_cov = diag([0, 0.01, 0.01, 0.01]); % Processor noise Covariance Matrix
+Q_cov = diag([0, 1, 1, 1]); % Processor noise Covariance Matrix
 % Q_cov = diag([0, 1, 1, 1]); % Processor noise Covariance Matrix
 
 

@@ -4,7 +4,7 @@ format long;
 
 % CSV 파일 읽기
 filename = '20250112_logdata_EKF_LowGain_withaccLPF_VICON_005.csv'; % CSV 파일 이름
-time_cutter = [10.8,40.8];
+time_cutter = [11,41];
 
 data = readtable(filename);
 
@@ -50,8 +50,10 @@ theta_ddot_RW = gradient(theta_dot_RW)/Ts;
 total_acc = sqrt(acc_x_imu.^2+acc_y_imu.^2+acc_z_imu.^2);
 
 % time cutter maximum 설정
+
 time_cutter(2) = min(time_cutter(2), max(timeStamp));
-cutted_idx = int64(round(time_cutter/Ts));
+cutted_idx = round(time_cutter/Ts);
+cutted_idx(1) = max(cutted_idx(1), 1);
 
 % ==================== Plot Start ========================================
 screenSize = get(0, 'ScreenSize'); % 화면 크기 가져오기
@@ -348,7 +350,7 @@ tab5 = uitab(tabGroup, 'Title', figure_title);
 layout = tiledlayout(tab5, 2, 3, "TileSpacing", "compact");
 title(layout,figure_title, 'FontSize', 14, 'FontWeight', 'bold');
 
-titles = {"acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z"};
+titles = {"a_{ x}", "a_{ y}", "a_{ z}", "w_{ x}", "w_{ y}", "w_{ z}"};
 y_labels = {"Magnitude (m/s^2)", "Magnitude (m/s^2)", "Magnitude (m/s^2)", ...
     "Magnitude (deg/s)", "Magnitude (deg/s)", "Magnitude (deg/s)"};
 
@@ -381,7 +383,7 @@ end
 
 
 % =================================== Figure 6 ============================
-figure_title = "Frequency Analysis of IMU Data";
+figure_title = "Frequency Analysis of Estimated States and Inputs";
 Line_width = 1.5;
 font_size = 12;
 
@@ -400,7 +402,7 @@ for i = 1:6
     ax = nexttile(layout, i);
     hold(ax, 'on');
 
-    [f, P] = get_fft(data{i}, Ts);
+    [f, P] = get_fft(data{i}(cutted_idx(1):cutted_idx(2)), Ts);
     % if (i <= 3)
     %     f = f(4:end);
     %     P = P(4:end);
@@ -420,3 +422,22 @@ for i = 1:6
     title(ax, titles{i}, 'FontSize', font_size + 2, 'FontWeight', 'bold');
     xlim(ax, [0, max(f)]); % Optional: Limit frequency range to useful values
 end
+
+% =================================== Figure 7 ============================
+figure_title = "etc.";
+Line_width = 1.5;
+
+tab7 = uitab(tabGroup, 'Title', figure_title);
+layout = tiledlayout(tab7, 2, 3, "TileSpacing", "compact");
+title(layout,figure_title, 'FontSize', 14, 'FontWeight', 'bold')
+
+ax = nexttile(layout, 1);
+hold(ax, 'on');
+plot(ax, timeStamp, cal_time, 'r', 'DisplayName', 'cal_time', 'LineWidth', Line_width);
+title(ax, 'Calculation time');
+xlabel(ax, 'Time (s)');
+ylabel(ax, 'calculation time (ms)');
+xlim(ax, time_cutter);
+grid(ax, "on");
+grid(ax, "minor");
+
