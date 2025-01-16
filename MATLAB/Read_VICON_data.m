@@ -7,12 +7,12 @@ addpath("log_plot\");
 addpath("VICON_data\");
 
 % CSV 파일 읽기
-filename = '20250112_VICON_Test_005.csv'; % CSV 파일 이름
+filename = '20250115_VICON_Test_008_h70.csv'; % CSV 파일 이름
 FPS = 250; % Hz
 h_offset = 0.2; % height (m) - VICON 설정에서 지정한 IMU로부터의 Offset
 r = 0.072; % wheel radius
 % time_cutter = [6.028, 30];
-time_cutter = [2, 30];
+time_cutter = [5, 35];
 
 cutted_idx = round(time_cutter*FPS);
 cutted_idx(1) = max(1, cutted_idx(1));

@@ -22,21 +22,6 @@ theta_hat = data.theta_hat;
 theta_dot_hat = data.theta_dot_hat;
 v_hat = data.v_hat;
 
-% EKF Parameters
-P_init = eye(4)*1; % 초기 추정 오차 공분산 행렬
-R_cov = [];
-if Case_num == 1
-    R_cov = diag([5e-1, 5e-1, 2e-4, 0, 0]); % Sensor noise Covariance Matrix
-elseif Case_num == 2
-    R_cov = diag([4e-1, 4e-1, 5e-5, 0, 0]); % Sensor noise Covariance Matrix
-elseif Case_num == 3
-    R_cov = diag([1e-2, 1e-4, 0, 0]); % Sensor noise Covariance Matrix
-end
-    
-
-Q_cov = diag([0, 1, 1, 1]); % Processor noise Covariance Matrix
-% Q_cov = diag([0, 1, 1, 1]); % Processor noise Covariance Matrix
-
 
 % Estimator
 x_hat_init = [0; 0; 0; 0];
