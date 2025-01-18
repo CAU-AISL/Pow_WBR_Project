@@ -17,8 +17,8 @@ v_d = 2;
 dpsi_d = 3;
 
 % LQR Weights
-Q_ = diag([0 1000 50000 1000]);  % 상태 가중치
-R_ = diag([1e6 1e6]);            % 입력 가중치
+Q_ = diag([0 0 10000 60]);  % 상태 가중치
+R_ = diag([1.5e5 1.5e5]);            % 입력 가중치
 
 % EKF Parameters
 P_init = eye(4); % 초기 추정 오차 공분산 행렬
@@ -128,10 +128,9 @@ syscl_c.outputName = output_labels;
 % figure();
 % bodeplot(syscl_c, opts);
 
-
 % 초기 설정
 x_eq = [theta_eq; 0; 0; 0];
-x = x_eq + [20 * pi/180; 0; 0; 0];
+x = x_eq + [0 * pi/180; 0; 0; 0];
 x_prev = x;
 z = zeros(8,1);
 
@@ -188,7 +187,7 @@ for t = 0:dt:3
         % u = -K_delay * ([x_hat; u_prev] - [x_d; 0; 0]);
 
         % Saturation 적용
-        u = max(min(u, u_max), u_min);
+        % u = max(min(u, u_max), u_min);
     end
     noise_std = 0.01;
     noise_mean = 0;

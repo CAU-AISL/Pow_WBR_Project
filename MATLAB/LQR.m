@@ -1,7 +1,10 @@
-clc;clear;close all;
+clc;
+% clear;
+close all;
 format long;
 load('dynamic_properties.mat');
 load('dynamics_functions.mat');
+addpath("lib\");
 
 h = 0.06; % (m)
 phi = 0;
@@ -12,8 +15,8 @@ p_bcom = r_total;
 I_B_B = I_total;
 L = properties.L;
 R = properties.R;
-m_RW = mass_of_Wheel_Right * 1e-3;
-m_LW = mass_of_Wheel * 1e-3;
+m_RW =mass_of_Wheel_Right * 1e-3;
+m_LW =mass_of_Wheel * 1e-3;
 
 theta_eq = atan(-r_total(1) / (h + r_total(3)));
 % disp('theta_eq(deg) : ');

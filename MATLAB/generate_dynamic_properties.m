@@ -61,17 +61,17 @@ inertia_tensor_ThighLink_Passive_Right = [5253.53554222, -5957.24686336, 2247.31
 
 % Wheel
 mass_of_Wheel = 237.11770281;  % 질량 (g)
-center_of_mass_Wheel = [-0.00000687; 0.43740164; -0.00000028];  % 무게 중심 위치 (mm)
-inertia_tensor_Wheel = [377169.50236306, -0.00684531, -0.00114686;
-                         -0.00684531, 723999.02807526, 0.00006205;
-                         -0.00114686, 0.00006205, 377169.52206100];  % 무게 중심 기준 관성 모멘트 (g mm^2)
+center_of_mass_Wheel = [-0.00306494587; 0.12343740164; -0.19989737481];  % 무게 중심 위치 (mm)
+inertia_tensor_Wheel = [349730.56785517, -0.00575668, 0.00665860;
+                        -0.00575668, 669844.41406104, 0.00370445;
+                        0.00665860, 0.00370445, 349730.57723613];  % 무게 중심 기준 관성 모멘트 (g mm^2)
 
 % Wheel Right
 mass_of_Wheel_Right = 214.11770281;  % 질량 (g)
-center_of_mass_Wheel_Right = [-0.00000761; 0.48438625; -0.00000031];  % 무게 중심 위치 (mm)
-inertia_tensor_Wheel_Right = [334104.60295742, -0.00692262, -0.00045120;
-                               -0.00692262, 640742.79507983, 0.00005987;
-                               -0.00045120, 0.00005987, 334104.65585037];  % 무게 중심 기준 관성 모멘트 (g mm^2)
+center_of_mass_Wheel_Right = [-0.00306493346; -0.12348438625; -0.19989738227];  % 무게 중심 위치 (mm)
+inertia_tensor_Wheel_Right = [310126.57864280, -0.00604291, 0.02440920;
+                              -0.00604291, 593418.76029417, 0.00337816;
+                              0.02440920, 0.00337816, 310126.60628687];  % 무게 중심 기준 관성 모멘트 (g mm^2)
 
 
 % link_parameter
@@ -84,8 +84,9 @@ properties.l4 = 137 * 1e-3;             % (m)
 properties.l5 = 8 * 1e-3;               % (m)
 
 
-properties.L = 123 * 1e-3;              % Distance between center and wheel (m)
-properties.R = 76.2 * 1e-3;             % Wheel Radius (m)
+properties.L = 0.123;              % Distance between center and wheel (m)
+properties.R = 0.072;             % Wheel Radius (m)
+% properties.R = 76.2 * 1e-3;             % Wheel Radius (m)
 
 
 % 각 link들의 CoM Offset (순서: [Body, TAR, TAL, TPR, TPL, CR, CL])
