@@ -19,7 +19,8 @@ public:
 
   // 캘리브레이션 값
   Eigen::Vector3f gyro_bias{ -0.1230688696f, -0.0304898514f,	0.01379522641f};    // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.544995687f,	-0.333633411f,	-1.002969875f};  // (m/s^2)
+  Eigen::Vector3f accel_bias{ 0.1981802f,	-0.333633411f,	-0.36471631818f};  // (m/s^2)
+  // Eigen::Vector3f accel_bias{ 0.544995687f,	-0.333633411f,	-1.002969875f};  // (m/s^2)
   // Eigen::Vector3f gyro_bias{ 0.f, 0.f, 0.f};    // (rad/s)
   // Eigen::Vector3f accel_bias{ 0.f,	0.f,	0.f};  // (m/s^2)
   
