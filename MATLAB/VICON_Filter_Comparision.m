@@ -21,27 +21,27 @@ h_offset = 0.2; % height (m) - VICON 설정에서 지정한 IMU로부터의 Offs
 Ts = 0.008; % Sampling time
 
 % === EKF ===
-Case_num = 1;
+Case_num = 0;
 P_init = eye(4)*1; % 초기 추정 오차 공분산 행렬
 R_cov = []; % Sensor noise Covariance Matrix
 Q_cov = []; % Process noise Covariance Matrix
 
 if Case_num == 0
     % Consider all measurements
-    R_cov = diag([4e-1, 4, 4e-1,...
-        1e-2, 1e-4, 1e-2,...
+    R_cov = diag([1e-1, 1, 1e-1,...
+        1e-3, 4.12642e-6, 1,...
         0, 0]);
     Q_cov = diag([0, 1, 1, 1]);
 
 elseif Case_num == 1
     % Consider only dominant measurements / without Coriolis
-    R_cov = diag([5e-1, 5e-1, 2e-4, 0, 0]);
-    Q_cov = diag([0, 1, 1, 1]);
+    R_cov = diag([7e-2, 7e-2, 4.12642e-6, 0, 0]);
+    Q_cov = diag([0, 1e-6, 1e-2, 1e-2]);
 
 elseif Case_num == 2
     % Consider only dominant measurements / with Coriolis
-    R_cov = diag([4e-1, 4e-1, 5e-5, 0, 0]);
-    Q_cov = diag([0, 1, 1, 1]);
+    R_cov = diag([7e-2, 7e-2, 4.12642e-6, 0, 0]);
+    Q_cov = diag([0, 1e-6, 1e-2, 1e-2]);
 
 elseif Case_num == 3
     % Consider only dominant measurements / use Pseudo measurement
@@ -51,8 +51,8 @@ end
 
 
 %
-x_lim_VICON = [0, 35];
-x_lim_Pow = [0, 35];
+x_lim_VICON = [1, 30];
+x_lim_Pow = [1, 30];
 
 % =========================================================================
 
@@ -90,6 +90,10 @@ z_m =  [data_Pow.acc_x'
     data_Pow.gyr_z'
     data_Pow.theta_dot_RW'
     data_Pow.theta_dot_LW'];
+
+% Apply IMU bias
+z_m(1,:) = z_m(1,:) + 0.5 * 7/13;
+% z_m(3,:) = z_m(3,:) - 1.002969875*7/11;
 
 z = [];
 if Case_num == 0
@@ -371,7 +375,7 @@ grid(ax, "on");
 grid(ax, "minor");
 
 % ========================== Figure 5 ============================
-figure_title = "Comparision between VICON and log";
+figure_title = "Comparision between VICON and calculated EKF";
 Line_width = 1.5;
 
 tab5 = uitab(tabGroup, 'Title', figure_title);
