@@ -1,7 +1,8 @@
 # WBR Control
+**Wheeled Bipedal Robot POW** project for Capstone Design graduation thesis conducted. This project is inspired by [Ascento](https://www.youtube.com/@AscentoRobotics). Seungbin Oh(@SeungbinOh), Jungbin Park, Jonghyun Woo(@Woodaengtang) are contributors of this project. 
+
 ## Hardware
 
-<!-- ![Hardware schemetic](/assets/hw_schemetic.png) -->
 <img src="/assets/hw_schemetic.png" width="700" heigh="370">
 
 - [DCDC step down converter](https://ko.aliexpress.com/item/1005006295829518.html?spm=a2g0o.productlist.main.1.16534b99MvfQUP&algo_pvid=870918c7-344b-40ee-95af-d3b5d3e207b9&algo_exp_id=870918c7-344b-40ee-95af-d3b5d3e207b9-0&pdp_npi=4%40dis%21KRW%217122%211359%21%21%2136.60%216.98%21%402141115b17282419275056704e9eae%2112000036649730449%21sea%21KR%216062351685%21ABX&curPageLogUid=S7a0WnK8hPSP&utparam-url=scene%3Asearch%7Cquery_from%3A)
