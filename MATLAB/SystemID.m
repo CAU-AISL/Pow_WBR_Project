@@ -13,7 +13,7 @@ load('dynamics_functions.mat');
 filename = '20250117_SystemID_HardTerrain.csv';
 
 Ts = 0.008; % Sampling time
-x_lim = [5, 30];
+x_lim = [5, 6];
 
 % =========================================================================
 
@@ -100,21 +100,7 @@ data_id = iddata(Y, U, Ts); % Create identification dataset
 opt = ssestOptions('display','on', 'Focus', 'simulation', 'N4weight', 'ssARX');
 m2 = pem(data_id,ms, opt);
 
-
-opt = n4sidOptions('N4Weight','SSARX','Display','on');
-order = 4; % System order, adjust as needed
-sys = n4sid(data_id, order, opt);
-% 
-% % Display identified state-space matrices
-% [A, B, C, D] = ssdata(sys);
-% disp('Identified State-Space Matrices:');
-% disp('A ='); disp(A);
-% disp('B ='); disp(B);
-% disp('C ='); disp(C);
-% disp('D ='); disp(D);
-% 
-% % Validate the model
-% figure;
+figure;
 compare(data_id, m2, sys);
 
 x_pred = zeros(size(x_hat));
@@ -124,7 +110,7 @@ x_pred(:,1:2) = x_hat(:,1:2);
 %     x_pred(:,i+1) = Ad*x_pred(:,i) + Bd*u(:,i-1);
 % end
 for i = 2:length(timeStamp)-1
-    x_pred(:,i+1) = Ad*x_hat(:,i) + Bd*u(:,i-1);
+    x_pred(:,i+1) = Ad*x_hat(:,i) + Bd*u(:,i);
 end
 
 % ========================================================================

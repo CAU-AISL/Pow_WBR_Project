@@ -3,7 +3,7 @@ clc; clear;
 format long;
 
 % CSV 파일 읽기
-filename = '20250117_logdata_tunnedEKF_Dynamictest_h200_VICON_011.csv'; % CSV 파일 이름
+filename = '20250119_Ts500.csv'; % CSV 파일 이름
 time_cutter = [0,100];
 
 data = readtable(filename);

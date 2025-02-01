@@ -36,13 +36,13 @@ public:
 
 private:
   // 서보 각도 범위
-  const int LH_SERVO_MIN = 56;   // 왼쪽 서보 최소각도
-  const int LH_SERVO_MAX = 156;  // 왼쪽 서보 최대각도
-  const int LH_SERVO_C = 86;     // 왼쪽 서보 중앙값
+  const int LH_SERVO_MIN = 60;   // 왼쪽 서보 최소각도
+  const int LH_SERVO_MAX = 160;  // 왼쪽 서보 최대각도
+  const int LH_SERVO_C = 90;     // 왼쪽 서보 중앙값
 
-  const int RH_SERVO_MIN = 4;   // 오른쪽 서보 최소각도
-  const int RH_SERVO_MAX = 104;  // 오른쪽 서보 최대각도
-  const int RH_SERVO_C = 74;     // 오른쪽 서보 중앙값
+  const int RH_SERVO_MIN = 20;   // 오른쪽 서보 최소각도
+  const int RH_SERVO_MAX = 120;  // 오른쪽 서보 최대각도
+  const int RH_SERVO_C = 90;     // 오른쪽 서보 중앙값
 
   Servo left_servo;
   Servo right_servo;

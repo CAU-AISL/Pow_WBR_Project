@@ -17,7 +17,7 @@ v_d = 2;
 dpsi_d = 3;
 
 % LQR Weights
-Q_ = diag([0 0 10000 10000]);  % 상태 가중치
+Q_ = diag([0 0 5000 1000]);  % 상태 가중치
 R_ = diag([1.5e5 1.5e5]);            % 입력 가중치
 
 % EKF Parameters
