@@ -30,11 +30,11 @@
 const float HEIGHT_MIN = 0.07;  // 최소 높이 (m)
 const float HEIGHT_MAX = 0.2;   // 최대 높이 (m)
 
-const float PHI_MIN = -30.0;  // phi 최소값 (degree)
-const float PHI_MAX = 30.0;   // phi 최대값 (degree)
+const float PHI_MIN = -15.0;  // phi 최소값 (degree)
+const float PHI_MAX = 15.0;   // phi 최대값 (degree)
 
 const float VEL_MAX = 2;  // 최대 속도 (m/s)
-const float YAW_MAX = 3.14;    // 최대 yaw angular velocity (rad/s)
+const float YAW_MAX = 4.71;    // 최대 yaw angular velocity (rad/s)
 
 const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
 // const float MAX_TORQUE = 0.12f;  // 최대 torque command
@@ -51,6 +51,8 @@ const char* ssid = "OSB";           // 핫스팟 이름
 const char* password = "12345678";  // 핫스팟 비밀번호
 
 const float dt = 0.008;  // sampling time
+// const float dt = 0.050;  // sampling time
+
 
 // mm -> m 단위 변환 함수 (벡터)
 template<typename T>

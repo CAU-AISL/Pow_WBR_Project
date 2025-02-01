@@ -9,7 +9,7 @@ Ts = 0.008;
 Ts_lqr = 0.008;
 dt = 0.0001; % simulation dt
 
-h = 0.07; % (m)
+h = 0.2; % (m)
 phi = 0;
 
 % desired command
@@ -17,7 +17,7 @@ v_d = 2;
 dpsi_d = 3;
 
 % LQR Weights
-Q_ = diag([0 0 10000 60]);  % 상태 가중치
+Q_ = diag([0 0 5000 1000]);  % 상태 가중치
 R_ = diag([1.5e5 1.5e5]);            % 입력 가중치
 
 % EKF Parameters
@@ -65,9 +65,11 @@ end
 
 % 이산 시스템 변환
 sys_c = ss(A_, B_, eye(4, 4), []);        % 연속 시스템 생성
+% Ac = sys_c.A
+% Bc = sys_c.B
 sys_d = c2d(sys_c, Ts_lqr, 'zoh');    % ZOH 방식으로 이산화
-Ad = sys_d.A;                    % 이산화된 A 행렬
-Bd = sys_d.B;                    % 이산화된 B 행렬
+Ad = sys_d.A                    % 이산화된 A 행렬
+Bd = sys_d.B                    % 이산화된 B 행렬
 
 A_delay = [Ad, Bd; zeros(2,6)];
 B_delay = [zeros(4,2);eye(2)];

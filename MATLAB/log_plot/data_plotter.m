@@ -3,8 +3,8 @@ clc; clear;
 format long;
 
 % CSV 파일 읽기
-filename = '20250112_logdata_EKF_LowGain_withaccLPF_VICON_005.csv'; % CSV 파일 이름
-time_cutter = [11,41];
+filename = '20250119_Ts500.csv'; % CSV 파일 이름
+time_cutter = [0,100];
 
 data = readtable(filename);
 
