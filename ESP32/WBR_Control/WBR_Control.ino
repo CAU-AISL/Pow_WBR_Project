@@ -41,6 +41,8 @@ Timer temp_timer(Timer::TimerType::Millis);
 float h_d = HEIGHT_MAX, phi_d = 0;
 float v_d = 0, dpsi_d = 0;
 
+float ipFloat[4];
+
 void serialPrintStates();
 
 // ==============================================================================
@@ -61,6 +63,41 @@ void setup() {
   pinMode(RS485_DE_RE, OUTPUT);                                         // RS485 방향 제어 핀 설정
   digitalWrite(RS485_DE_RE, LOW);                                       // RS485 수신 모드 설정
   RS485.begin(RS485_BAUDRATE, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);  // RS485 통신 시작
+
+  // ======================================
+  // WiFi.mode(WIFI_STA);  // 스테이션 모드로 설정
+  // WiFi.begin(ssid_w, password_w);
+
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   delay(1000);
+  // }
+
+  // // Get the IP address as a string
+  // String ipAddress = WiFi.localIP().toString();
+
+  // // Split the IP address by the '.' character
+  // int ipSegments[4];
+  // int segmentIndex = 0;
+  // int startIndex = 0;
+
+  // for (int i = 0; i < ipAddress.length(); i++) {
+  //   if (ipAddress.charAt(i) == '.' || i == ipAddress.length() - 1) {
+  //     String segment = ipAddress.substring(startIndex, i);
+  //     if (i == ipAddress.length() - 1) {
+  //       segment = ipAddress.substring(startIndex);
+  //     }
+  //     ipSegments[segmentIndex] = segment.toInt();  // Convert each segment to int
+  //     segmentIndex++;
+  //     startIndex = i + 1;
+  //   }
+  // }
+
+  // // Convert each segment to float and store it
+  // for (int i = 0; i < 4; i++) {
+  //   ipFloat[i] = (float)ipSegments[i];  // Store as float
+  // }
+  // WiFi.disconnect();
+  //===========================================
 
   // WIFI 연결
   WIFI_Logger.begin();
@@ -125,6 +162,11 @@ void setup() {
 
   WIFI_Logger.readyToLogValue("current_RW");
   WIFI_Logger.readyToLogValue("current_LW");
+
+  // WIFI_Logger.readyToLogValue("IP_1");
+  // WIFI_Logger.readyToLogValue("IP_2");
+  // WIFI_Logger.readyToLogValue("IP_3");
+  // WIFI_Logger.readyToLogValue("IP_4");
   // =======================================================================
 
   // 시간 측정 시작
@@ -243,6 +285,11 @@ void loop() {
       // Current measurements for the wheels
       WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
       WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
+
+      // WIFI_Logger.logValue("IP_1", ipFloat[0]);  // Acceleration in z-direction
+      // WIFI_Logger.logValue("IP_2", ipFloat[1]);  // Gyroscope reading in x-direction
+      // WIFI_Logger.logValue("IP_3", ipFloat[2]);  // Gyroscope reading in y-direction
+      // WIFI_Logger.logValue("IP_4", ipFloat[3]);  // Gyroscope reading in z-direction
       //=============================================================================================
     } else if (receiver.isReset()) {
       // Estimator Reset
@@ -327,6 +374,11 @@ void loop() {
       // Current measurements for the wheels
       WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
       WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
+
+      // WIFI_Logger.logValue("IP_1", ipFloat[0]);  // Acceleration in z-direction
+      // WIFI_Logger.logValue("IP_2", ipFloat[1]);  // Gyroscope reading in x-direction
+      // WIFI_Logger.logValue("IP_3", ipFloat[2]);  // Gyroscope reading in y-direction
+      // WIFI_Logger.logValue("IP_4", ipFloat[3]);  // Gyroscope reading in z-direction
       //=============================================================================================
 
       serialPrintStates();
