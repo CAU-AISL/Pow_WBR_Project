@@ -15,7 +15,7 @@
 
 // 핀 번호 정의
 #define LH_PIN 13  // 왼쪽 서보 핀
-#define RH_PIN 21  // 오른쪽 서보 핀
+#define RH_PIN 20  // 오른쪽 서보 핀
 
 #define SBUS_RX_PIN 15  // SBUS 수신 핀
 

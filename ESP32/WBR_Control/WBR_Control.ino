@@ -41,6 +41,8 @@ Timer temp_timer(Timer::TimerType::Millis);
 float h_d = HEIGHT_MAX, phi_d = 0;
 float v_d = 0, dpsi_d = 0;
 
+float ipFloat[4];
+
 void serialPrintStates();
 
 // ==============================================================================
@@ -48,7 +50,7 @@ void serialPrintStates();
 // ==============================================================================
 void setup() {
   // Serial 통신, Receiver, HR Controller 초기화
-  Serial.begin(SERIAL_BAUDRATE);               // Serial 통신 시작
+  Serial.begin(115200);               // Serial 통신 시작
   receiver.begin();                            // Receiver 초기화
   HR_controller.attachServos(LH_PIN, RH_PIN);  // Servo Pin 설정
 
@@ -60,7 +62,7 @@ void setup() {
   // RS485 초기화
   pinMode(RS485_DE_RE, OUTPUT);                                         // RS485 방향 제어 핀 설정
   digitalWrite(RS485_DE_RE, LOW);                                       // RS485 수신 모드 설정
-  RS485.begin(RS485_BAUDRATE, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);  // RS485 통신 시작
+  RS485.begin(460800, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);  // RS485 통신 시작
 
   // WIFI 연결
   WIFI_Logger.begin();
@@ -243,6 +245,11 @@ void loop() {
       // Current measurements for the wheels
       WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
       WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
+
+      // WIFI_Logger.logValue("IP_1", ipFloat[0]);  // Acceleration in z-direction
+      // WIFI_Logger.logValue("IP_2", ipFloat[1]);  // Gyroscope reading in x-direction
+      // WIFI_Logger.logValue("IP_3", ipFloat[2]);  // Gyroscope reading in y-direction
+      // WIFI_Logger.logValue("IP_4", ipFloat[3]);  // Gyroscope reading in z-direction
       //=============================================================================================
     } else if (receiver.isReset()) {
       // Estimator Reset
@@ -327,6 +334,11 @@ void loop() {
       // Current measurements for the wheels
       WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
       WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
+
+      // WIFI_Logger.logValue("IP_1", ipFloat[0]);  // Acceleration in z-direction
+      // WIFI_Logger.logValue("IP_2", ipFloat[1]);  // Gyroscope reading in x-direction
+      // WIFI_Logger.logValue("IP_3", ipFloat[2]);  // Gyroscope reading in y-direction
+      // WIFI_Logger.logValue("IP_4", ipFloat[3]);  // Gyroscope reading in z-direction
       //=============================================================================================
 
       serialPrintStates();
