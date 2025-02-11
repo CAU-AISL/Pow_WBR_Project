@@ -7,7 +7,7 @@ addpath("log_plot\");
 addpath("VICON_data\");
 
 % CSV 파일 읽기
-filename = '20250117_VICON_Test_012_Dynamictest_3.csv'; % CSV 파일 이름
+filename = '20250209_VICON_Test_EKF_Hard.csv'; % CSV 파일 이름
 FPS = 250; % Hz
 h_offset = 0.2; % height (m) - VICON 설정에서 지정한 IMU로부터의 Offset
 r = 0.072; % wheel radius

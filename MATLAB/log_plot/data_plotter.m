@@ -3,8 +3,10 @@ clc; clear;
 format long;
 
 % CSV 파일 읽기
-filename = '20250119_Ts500.csv'; % CSV 파일 이름
-time_cutter = [0,100];
+filename = '20250210_maxyawrate.csv'; % CSV 파일 이름
+time_cutter = [0,1000];
+angle_unit = 1;
+% 0 : degree, 1: rad
 
 data = readtable(filename);
 
@@ -72,11 +74,17 @@ title(layout,figure_title, 'FontSize', 14, 'FontWeight', 'bold')
 
 ax = nexttile(layout, 1);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(theta_hat), 'r', 'DisplayName', '\theta_{hat}', 'LineWidth', Line_width);
-plot(ax, timeStamp, rad2deg(theta_d), 'k', 'DisplayName', '\theta_{d}');
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(theta_hat), 'r', 'DisplayName', '\theta_{hat}', 'LineWidth', Line_width);
+    plot(ax, timeStamp, rad2deg(theta_d), 'k', 'DisplayName', '\theta_{d}');
+    ylabel(ax, 'Angle (deg)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, theta_hat, 'r', 'DisplayName', '\theta_{hat}', 'LineWidth', Line_width);
+    plot(ax, timeStamp, theta_d, 'k', 'DisplayName', '\theta_{d}');
+    ylabel(ax, 'Angle (rad)');
+end
 title(ax, '\theta_{hat}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angle (deg)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -84,11 +92,16 @@ grid(ax, "minor");
 
 ax = nexttile(layout, 2);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(theta_dot_hat), 'r', 'DisplayName', '\theta^{dot}_{hat}', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(theta_dot_hat), 'r', 'DisplayName', '\theta^{dot}_{hat}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, theta_dot_hat, 'r', 'DisplayName', '\theta^{dot}_{hat}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 plot(ax, timeStamp, zeros(length(timeStamp),1), 'k', 'DisplayName', '\theta^{dot}_{d}');
 title(ax, '\theta^{dot}_{hat}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -108,11 +121,17 @@ grid(ax, "minor");
 
 ax = nexttile(layout, 5);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(psi_dot_hat), 'r', 'DisplayName', '\psi^{dot}_{hat}', 'LineWidth', Line_width);
-plot(ax, timeStamp, rad2deg(psi_dot_d), 'k', 'DisplayName', '\psi^{dot}_{d}');
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(psi_dot_hat), 'r', 'DisplayName', '\psi^{dot}_{hat}', 'LineWidth', Line_width);
+    plot(ax, timeStamp, rad2deg(psi_dot_d), 'k', 'DisplayName', '\psi^{dot}_{d}');
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, psi_dot_hat, 'r', 'DisplayName', '\psi^{dot}_{hat}', 'LineWidth', Line_width);
+    plot(ax, timeStamp, psi_dot_d, 'k', 'DisplayName', '\psi^{dot}_{d}');
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, '\psi^{dot}_{hat}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -152,10 +171,15 @@ title(layout,figure_title, 'FontSize', 14, 'FontWeight', 'bold')
 
 ax = nexttile(layout, 1);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(theta_hat), 'r', 'DisplayName', '\theta_{hat}', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(theta_hat), 'r', 'DisplayName', '\theta_{hat}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angle (deg)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, theta_hat, 'r', 'DisplayName', '\theta_{hat}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angle (rad)');
+end
 title(ax, '\theta_{hat}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angle (deg)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -163,10 +187,15 @@ grid(ax, "minor");
 
 ax = nexttile(layout, 2);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(theta_dot_hat), 'r', 'DisplayName', '\theta^{dot}_{hat}', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(theta_dot_hat), 'r', 'DisplayName', '\theta^{dot}_{hat}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, theta_dot_hat, 'r', 'DisplayName', '\theta^{dot}_{hat}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, '\theta^{dot}_{hat}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -185,10 +214,15 @@ grid(ax, "minor");
 
 ax = nexttile(layout, 4);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(psi_dot_hat), 'r', 'DisplayName', '\psi^{dot}_{hat}', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(psi_dot_hat), 'r', 'DisplayName', '\psi^{dot}_{hat}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, psi_dot_hat, 'r', 'DisplayName', '\psi^{dot}_{hat}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, '\psi^{dot}_{hat}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -218,12 +252,19 @@ grid(ax, "minor");
 
 ax = nexttile(layout, 4);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(gyr_x_imu), 'r', 'DisplayName', 'w_x', 'LineWidth', Line_width);
-plot(ax, timeStamp, rad2deg(gyr_y_imu), 'g', 'DisplayName', 'w_y', 'LineWidth', Line_width);
-plot(ax, timeStamp, rad2deg(gyr_z_imu), 'b', 'DisplayName', 'w_z', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(gyr_x_imu), 'r', 'DisplayName', 'w_x', 'LineWidth', Line_width);
+    plot(ax, timeStamp, rad2deg(gyr_y_imu), 'g', 'DisplayName', 'w_y', 'LineWidth', Line_width);
+    plot(ax, timeStamp, rad2deg(gyr_z_imu), 'b', 'DisplayName', 'w_z', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, gyr_x_imu, 'r', 'DisplayName', 'w_x', 'LineWidth', Line_width);
+    plot(ax, timeStamp, gyr_y_imu, 'g', 'DisplayName', 'w_y', 'LineWidth', Line_width);
+    plot(ax, timeStamp, gyr_z_imu, 'b', 'DisplayName', 'w_z', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, 'IMU Gyroscope Measurements');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -231,10 +272,15 @@ grid(ax, "minor");
 
 ax = nexttile(layout, 2);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(theta_dot_RW), 'r', 'DisplayName', '\theta^{dot}_{RW}', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(theta_dot_RW), 'r', 'DisplayName', '\theta^{dot}_{RW}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, theta_dot_RW, 'r', 'DisplayName', '\theta^{dot}_{RW}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, 'Right Wheel speed');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -242,10 +288,15 @@ grid(ax, "minor");
 
 ax = nexttile(layout, 5);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(theta_dot_LW), 'r', 'DisplayName', '\theta^{dot}_{LW}', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(theta_dot_LW), 'r', 'DisplayName', '\theta^{dot}_{LW}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, theta_dot_LW, 'r', 'DisplayName', '\theta^{dot}_{LW}', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, 'Left Wheel speed');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 legend(ax, 'show');
 grid(ax, "on");
@@ -313,30 +364,45 @@ grid(ax, "minor");
 
 ax = nexttile(layout, 4);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(gyr_x_imu), 'r', 'DisplayName', 'w_x', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(gyr_x_imu), 'r', 'DisplayName', 'w_x', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, gyr_x_imu, 'r', 'DisplayName', 'w_x', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, 'w_{IMU, x}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 grid(ax, "on");
 grid(ax, "minor");
 
 ax = nexttile(layout, 5);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(gyr_y_imu), 'g', 'DisplayName', 'w_y', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(gyr_y_imu), 'g', 'DisplayName', 'w_y', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, gyr_y_imu, 'g', 'DisplayName', 'w_y', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, 'w_{IMU, y}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 grid(ax, "on");
 grid(ax, "minor");
 
 ax = nexttile(layout, 6);
 hold(ax, 'on');
-plot(ax, timeStamp, rad2deg(gyr_z_imu), 'b', 'DisplayName', 'w_z', 'LineWidth', Line_width);
+if angle_unit == 0
+    plot(ax, timeStamp, rad2deg(gyr_z_imu), 'b', 'DisplayName', 'w_z', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (deg/s)');
+elseif angle_unit == 1
+    plot(ax, timeStamp, gyr_z_imu, 'b', 'DisplayName', 'w_z', 'LineWidth', Line_width);
+    ylabel(ax, 'Angular rate (rad/s)');
+end
 title(ax, 'w_{IMU, z}');
 xlabel(ax, 'Time (s)');
-ylabel(ax, 'Angular rate (deg/s)');
 xlim(ax, time_cutter);
 grid(ax, "on");
 grid(ax, "minor");
@@ -359,7 +425,7 @@ data = {acc_x_imu, acc_y_imu, acc_z_imu, ...
 for i = 1:6
     ax = nexttile(layout, i);
     hold(ax, 'on');
-    
+
     [f, P] = get_fft(data{i}(cutted_idx(1):cutted_idx(2)), Ts);
     if (i <= 3)
         f = f(4:end);

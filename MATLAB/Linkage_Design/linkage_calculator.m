@@ -154,7 +154,10 @@ xlabel('x (mm)');
 ylabel('y (mm)');
 axis equal;
 grid on;
-legend('E');
+grid minor;
+% legend('E');
+xlim([-120, 120]);
+ylim([-250, 0]);
 
 % theta와 E_y의 관계 플롯
 subplot(2,4,6);
@@ -171,3 +174,16 @@ title("phi vs E_y");
 xlabel('\phi(deg)');
 ylabel('y (mm)');
 grid on;
+
+figure();
+% E 점의 궤적 플롯
+plot(E_x_cut,E_y_cut,'r','LineWidth',3);
+title("Trajectory of the point E");
+xlabel('x (mm)');
+ylabel('y (mm)');
+axis equal;
+grid on;
+grid minor;
+% legend('E');
+xlim([-120, 120]);
+ylim([-250, 0]);

@@ -18,9 +18,10 @@ public:
   float temperature;  // 온도 (섭씨)
 
   // 캘리브레이션 값
-  Eigen::Vector3f gyro_bias{ -0.1230688696f, -0.0304898514f,	0.01379522641f};    // (rad/s)
-  Eigen::Vector3f accel_bias{ 0.1981802f,	-0.333633411f,	-0.36471631818f};  // (m/s^2)
-  // Eigen::Vector3f accel_bias{ 0.544995687f,	-0.333633411f,	-1.002969875f};  // (m/s^2)
+  // Eigen::Vector3f gyro_bias{ -0.1230688696f, -0.0304898514f,	0.01379522641f};    // (rad/s)
+  // Eigen::Vector3f accel_bias{ 0.1981802f,	-0.333633411f,	-0.36471631818f};  // (m/s^2)
+  Eigen::Vector3f gyro_bias{ -0.12033161f, -0.02295994f,	0.00176078f};    // (rad/s)
+  Eigen::Vector3f accel_bias{ 0.564718225f,	-0.083566378f,	-0.735670791f};  // (m/s^2)
   // Eigen::Vector3f gyro_bias{ 0.f, 0.f, 0.f};    // (rad/s)
   // Eigen::Vector3f accel_bias{ 0.f,	0.f,	0.f};  // (m/s^2)
   
