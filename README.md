@@ -1,5 +1,5 @@
 # WBR Control
-**Wheeled Bipedal Robot POW** project for Capstone Design graduation thesis conducted. This project is inspired by [Ascento](https://www.youtube.com/@AscentoRobotics). Seungbin Oh(@SeungbinOh), Jungbin Park, Jonghyun Woo(@Woodaengtang) are contributors of this project. 
+**Wheeled Bipedal Robot POW** project for Capstone Design graduation thesis conducted. This project is inspired by [Ascento](https://www.youtube.com/@AscentoRobotics). @SeungbinOh, Jungbin Park, @Woodaengtang are contributors of this project. 
 
 ## Hardware
 
@@ -21,3 +21,5 @@
 - [Eigen](https://github.com/hideakitai/ArduinoEigen)
 - [Bolder Flight Systems SUBS](https://github.com/bolderflight/sbus)
 - [ESP32Servo](https://madhephaestus.github.io/ESP32Servo/annotated.html)
+
+

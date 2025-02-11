@@ -33,8 +33,8 @@ const float HEIGHT_MAX = 0.2;   // 최대 높이 (m)
 const float PHI_MIN = -15.0;  // phi 최소값 (degree)
 const float PHI_MAX = 15.0;   // phi 최대값 (degree)
 
-const float VEL_MAX = 2;     // 최대 속도 (m/s)
-const float YAW_MAX = 4.71;  // 최대 yaw angular velocity (rad/s)
+const float VEL_MAX = 1;     // 최대 속도 (m/s)
+const float YAW_MAX = 1;  // 최대 yaw angular velocity (rad/s)
 
 const float MAX_TORQUE_COMMAND = 100.000;  // 최대 torque command
 // const float MAX_TORQUE = 0.12f;  // 최대 torque command
@@ -52,7 +52,7 @@ const char* ssid = "OSB";           // 핫스팟 이름
 const char* password = "12345678";  // 핫스팟 비밀번호
 
 const float dt = 0.008;  // sampling time
-// const float dt = 0.050;  // sampling time
+// const float dt = 0.007;  // sampling time
 
 
 // mm -> m 단위 변환 함수 (벡터)
@@ -124,13 +124,18 @@ inline Properties createDefaultProperties() {
   };
 
   // Mainbody
-  props.m_Body = G_TO_KG(1535.08468770f);  // G_TO_KG 함수에서 반환값이 float인 경우 f를 추가
-  props.CoM_Body = mmToMVector(Eigen::Matrix<float, 3, 1>(18.97019622f, -0.57929425f, 37.88613248f));
-  props.I_Body = gmm2ToKgm2Matrix((Eigen::Matrix<float, 3, 3>() << 4602376.27672540f, 35871.64379060f, 115069.65732758f,
-                                   35871.64379060f, 6967964.66780666f, 6478.91144708f,
-                                   115069.65732758f, 6478.91144708f, 8351005.72480064f)
+  // props.m_Body = G_TO_KG(1524.76209213f);  // G_TO_KG 함수에서 반환값이 float인 경우 f를 추가
+  // props.CoM_Body = mmToMVector(Eigen::Matrix<float, 3, 1>(10.81299751f, -0.19574788f, 36.74451323f));
+  // props.I_Body = gmm2ToKgm2Matrix((Eigen::Matrix<float, 3, 3>() << 4221074.20231635f, 26062.23004946f, 277168.19335956f,
+  //                          26062.23004946f, 7437280.54727470f, 6416.10856472f,
+  //                          277168.19335956f, 6416.10856472f, 8509987.98611482f)
+  //                                   .finished());
+  props.m_Body = G_TO_KG(1524.76209213f);  // G_TO_KG 함수에서 반환값이 float인 경우 f를 추가
+  props.CoM_Body = mmToMVector(Eigen::Matrix<float, 3, 1>(13.71923256f, -0.22808627f, 34.91864017f));
+  props.I_Body = gmm2ToKgm2Matrix((Eigen::Matrix<float, 3, 3>() << 4274811.10362144f, 21823.60087554f, 202865.50474913f,
+                                   21823.60087554f, 7103674.50655196f, 7275.19023018f,
+                                   202865.50474913f, 7275.19023018f, 8108785.33349067f)
                                     .finished());
-
 
   // Calf Link Left
   props.m_CL = G_TO_KG(319.23782393f);

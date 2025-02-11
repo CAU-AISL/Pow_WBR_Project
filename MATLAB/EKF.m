@@ -14,11 +14,11 @@ phi = 0;
 
 % desired command
 v_d = 2;
-dpsi_d = 3;
+dpsi_d = 3.14;
 
 % LQR Weights
-Q_ = diag([0 0 10000 5000]);  % 상태 가중치
-R_ = diag([1.5e5 1.5e5]);            % 입력 가중치
+Q_ = diag([100 0 20 5]);  % 상태 가중치
+R_ = diag([150 150]);     % 입력 가중치
 
 % EKF Parameters
 P_init = eye(4); % 초기 추정 오차 공분산 행렬
@@ -80,6 +80,7 @@ K_delay;
 % Discrete LQR Gain 계산
 [K_d, S_d, P_d] = dlqr(Ad, Bd, Q_, R_);
 K_d
+
 
 % Continuous LQR Gain 계산
 [K_c, S_c, P_c] = lqr(A_, B_, Q_, R_);
@@ -287,7 +288,7 @@ ylabel('d\psi (deg/s)');
 grid on;
 title('State Variable: d\psi');
 legend('x', 'x_{hat}', 'x_{d}', 'x_i', 'Location', 'best');
-ylim([-100, 100]); % Adjust as needed
+ylim([-360, 360]); % Adjust as needed
 
 % 입력 변수 플로팅 (u_1)
 subplot(2,3,3);

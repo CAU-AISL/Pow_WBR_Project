@@ -10,12 +10,13 @@ load('dynamic_properties.mat');
 load('dynamics_functions.mat');
 
 % ============================ Adjustable Parameters ===================
-filename_VICON = '20250115_VICON_Test_006_h200.csv';
-filename_Pow = '20250115_logdata_HighGain_Vibrationtest_h200.csv';
+filename_VICON = '20250209_VICON_Test_EKF_Hard.csv';
+filename_Pow = '20250209_EKFTunning_hardterrain.csv';
 
 % === VICON ===
 VICON_FPS = 250; % Hz
-h_offset = 0.2; % height (m) - VICON 설정에서 지정한 IMU로부터의 Offset
+% h_offset = 0.2; % height (m) - VICON 설정에서 지정한 IMU로부터의 Offset
+h_offset = -0.104535; % height (m) - VICON 설정에서 지정한 IMU로부터의 Offset
 
 % === System (Pow) ===
 Ts = 0.008; % Sampling time
@@ -92,7 +93,7 @@ z_m =  [data_Pow.acc_x'
     data_Pow.theta_dot_LW'];
 
 % Apply IMU bias
-z_m(1,:) = z_m(1,:) + 0.5 * 7/13;
+% z_m(1,:) = z_m(1,:) + 0.5 * 7/13;
 % z_m(3,:) = z_m(3,:) - 1.002969875*7/11;
 
 z = [];
@@ -168,7 +169,7 @@ h_d_log_sync_idx = find(h_d_log < 0.195, 1, 'first');
 hs_sync_time = timeStamp_VICON(hs_sync_idx);
 h_d_log_sync_time = timeStamp_Pow(h_d_log_sync_idx);
 
-timeStamp_Pow = timeStamp_Pow - (h_d_log_sync_time - hs_sync_time) - 0.064;
+timeStamp_Pow = timeStamp_Pow - (h_d_log_sync_time - hs_sync_time) - 0.064 -0.055;
 
 
 % ========================================================================

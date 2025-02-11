@@ -41,8 +41,6 @@ Timer temp_timer(Timer::TimerType::Millis);
 float h_d = HEIGHT_MAX, phi_d = 0;
 float v_d = 0, dpsi_d = 0;
 
-float ipFloat[4];
-
 void serialPrintStates();
 
 // ==============================================================================
@@ -100,11 +98,11 @@ void setup() {
 
   WIFI_Logger.readyToLogTimeStamp();  // 시간 기록
   // Desired states
-  WIFI_Logger.readyToLogValue("h_d");
+  WIFI_Logger.readyToLogValue("h_d"); 
   WIFI_Logger.readyToLogValue("theta_d");
   WIFI_Logger.readyToLogValue("v_d");
   WIFI_Logger.readyToLogValue("psi_dot_d");
-
+  
   // Estimated states
   WIFI_Logger.readyToLogValue("theta_hat");
   WIFI_Logger.readyToLogValue("theta_dot_hat");  // 시간 기록
@@ -194,6 +192,7 @@ void loop() {
       phi_d = 0;  // roll control disable
       v_d = receiver.getDesiredVel();
       dpsi_d = receiver.getDesiredYawVel();
+
       x_d.segment<2>(2) << v_d, dpsi_d;
 
       //// calculate CoM and Inertia from CoM Calculator ////
@@ -221,6 +220,7 @@ void loop() {
       WIFI_Logger.logValue("theta_d", x_d(0));    // Desired pitch angle (theta)
       WIFI_Logger.logValue("v_d", x_d(2));        // Desired velocity
       WIFI_Logger.logValue("psi_dot_d", x_d(3));  // Desired yaw rate (psi_dot)
+      
 
       // Estimated states (current system state estimates)
       WIFI_Logger.logValue("theta_hat", x(0));      // Estimated pitch angle (theta)
@@ -245,11 +245,6 @@ void loop() {
       // Current measurements for the wheels
       WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
       WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
-
-      // WIFI_Logger.logValue("IP_1", ipFloat[0]);  // Acceleration in z-direction
-      // WIFI_Logger.logValue("IP_2", ipFloat[1]);  // Gyroscope reading in x-direction
-      // WIFI_Logger.logValue("IP_3", ipFloat[2]);  // Gyroscope reading in y-direction
-      // WIFI_Logger.logValue("IP_4", ipFloat[3]);  // Gyroscope reading in z-direction
       //=============================================================================================
     } else if (receiver.isReset()) {
       // Estimator Reset
@@ -300,46 +295,41 @@ void loop() {
         }
       }
 
-      //============= Logging ======================================================================
-      // Logging calculating time and timestamp
-      WIFI_Logger.logValue("cal_time", sampling_timer.getDuration());  // Log the calculating time
-      WIFI_Logger.logTimeStamp(log_timer.getDuration());               // Log the current timestamp
+      // //============= Logging ======================================================================
+      // // Logging calculating time and timestamp
+      // WIFI_Logger.logValue("cal_time", sampling_timer.getDuration());  // Log the calculating time
+      // WIFI_Logger.logTimeStamp(log_timer.getDuration());               // Log the current timestamp
 
-      // Desired states (reference values for control)
-      WIFI_Logger.logValue("h_d", h_d);           // Desired height
-      WIFI_Logger.logValue("theta_d", x_d(0));    // Desired pitch angle (theta)
-      WIFI_Logger.logValue("v_d", x_d(2));        // Desired velocity
-      WIFI_Logger.logValue("psi_dot_d", x_d(3));  // Desired yaw rate (psi_dot)
+      // // Desired states (reference values for control)
+      // WIFI_Logger.logValue("h_d", h_d);           // Desired height
+      // WIFI_Logger.logValue("theta_d", x_d(0));    // Desired pitch angle (theta)
+      // WIFI_Logger.logValue("v_d", x_d(2));        // Desired velocity
+      // WIFI_Logger.logValue("psi_dot_d", x_d(3));  // Desired yaw rate (psi_dot)
 
-      // Estimated states (current system state estimates)
-      WIFI_Logger.logValue("theta_hat", x(0));      // Estimated pitch angle (theta)
-      WIFI_Logger.logValue("theta_dot_hat", x(1));  // Estimated pitch rate (theta_dot)
-      WIFI_Logger.logValue("v_hat", x(2));          // Estimated velocity
-      WIFI_Logger.logValue("psi_dot_hat", x(3));    // Estimated yaw rate (psi_dot)
+      // // Estimated states (current system state estimates)
+      // WIFI_Logger.logValue("theta_hat", x(0));      // Estimated pitch angle (theta)
+      // WIFI_Logger.logValue("theta_dot_hat", x(1));  // Estimated pitch rate (theta_dot)
+      // WIFI_Logger.logValue("v_hat", x(2));          // Estimated velocity
+      // WIFI_Logger.logValue("psi_dot_hat", x(3));    // Estimated yaw rate (psi_dot)
 
-      // Control inputs (commands to the system)
-      WIFI_Logger.logValue("tau_RW", u(0));  // Control torque for the right wheel (RW)
-      WIFI_Logger.logValue("tau_LW", u(1));  // Control torque for the left wheel (LW)
+      // // Control inputs (commands to the system)
+      // WIFI_Logger.logValue("tau_RW", u(0));  // Control torque for the right wheel (RW)
+      // WIFI_Logger.logValue("tau_LW", u(1));  // Control torque for the left wheel (LW)
 
-      // Measurements (sensor readings)
-      WIFI_Logger.logValue("acc_x", z(0));         // Acceleration in x-direction
-      WIFI_Logger.logValue("acc_y", z(1));         // Acceleration in y-direction
-      WIFI_Logger.logValue("acc_z", z(2));         // Acceleration in z-direction
-      WIFI_Logger.logValue("gyr_x", z(3));         // Gyroscope reading in x-direction
-      WIFI_Logger.logValue("gyr_y", z(4));         // Gyroscope reading in y-direction
-      WIFI_Logger.logValue("gyr_z", z(5));         // Gyroscope reading in z-direction
-      WIFI_Logger.logValue("theta_dot_RW", z(6));  // Angular velocity of the right wheel
-      WIFI_Logger.logValue("theta_dot_LW", z(7));  // Angular velocity of the left wheel
+      // // Measurements (sensor readings)
+      // WIFI_Logger.logValue("acc_x", z(0));         // Acceleration in x-direction
+      // WIFI_Logger.logValue("acc_y", z(1));         // Acceleration in y-direction
+      // WIFI_Logger.logValue("acc_z", z(2));         // Acceleration in z-direction
+      // WIFI_Logger.logValue("gyr_x", z(3));         // Gyroscope reading in x-direction
+      // WIFI_Logger.logValue("gyr_y", z(4));         // Gyroscope reading in y-direction
+      // WIFI_Logger.logValue("gyr_z", z(5));         // Gyroscope reading in z-direction
+      // WIFI_Logger.logValue("theta_dot_RW", z(6));  // Angular velocity of the right wheel
+      // WIFI_Logger.logValue("theta_dot_LW", z(7));  // Angular velocity of the left wheel
 
-      // Current measurements for the wheels
-      WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
-      WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
-
-      // WIFI_Logger.logValue("IP_1", ipFloat[0]);  // Acceleration in z-direction
-      // WIFI_Logger.logValue("IP_2", ipFloat[1]);  // Gyroscope reading in x-direction
-      // WIFI_Logger.logValue("IP_3", ipFloat[2]);  // Gyroscope reading in y-direction
-      // WIFI_Logger.logValue("IP_4", ipFloat[3]);  // Gyroscope reading in z-direction
-      //=============================================================================================
+      // // Current measurements for the wheels
+      // WIFI_Logger.logValue("current_RW", iq_vec(0));  // Current for the right wheel
+      // WIFI_Logger.logValue("current_LW", iq_vec(1));  // Current for the left wheel
+      // //=============================================================================================
 
       serialPrintStates();
       // MPU6050.printData();
